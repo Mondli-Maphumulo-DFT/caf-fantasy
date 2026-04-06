@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CAF Fantasy Football 2025/26</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body,#root{height:100%;background:#0B2A1A;}
+  body{overflow-x:hidden;}
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,0.05);}
+  ::-webkit-scrollbar-thumb{background:#D4A01750;border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+/* ─────────────────────────────────────────
+   ★  PASTE YOUR SUPABASE CREDENTIALS HERE ★
+   ───────────────────────────────────────── */
+const SUPABASE_URL  = "https://upafmcukvnswolptyghw.supabase.co";
+const SUPABASE_ANON = "sb_publishable_g9AkeT5a_J4-czVvVibGgQ_1jXsmZ4J";
+/* ───────────────────────────────────────── */
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const { useState, useEffect, useRef, useCallback } = React;
+
+const C = {
+  forest:"#0B2A1A",gold:"#D4A017",amber:"#E8B84B",terracotta:"#C0522A",
+  cream:"#F5EDD6",sage:"#2D6A4F",muted:"#8A7D65",dark:"#0A1F12",
+  pitch:"#1B6B34",error:"#C0522A",
+};
+
+const posColors = {
+  GK:{bg:"#8B5A00",text:"#FFD95C"},
+  DEF:{bg:"#1A4D2E",text:"#72E0A0"},
+  MID:{bg:"#1A3A5C",text:"#72C4E0"},
+  FWD:{bg:"#5C1A1A",text:"#E07272"},
+};
+
+const ALL_PLAYERS = [
+  {id:1, name:"A. Onana",   nation:"CMR", club:"Man United",  pts:82,  price:5.5,  form:[6,8,6,9,7],    pos:"GK",  flag:"🇨🇲"},
+  {id:2, name:"R. Sanchez", nation:"MAR", club:"Chelsea",     pts:74,  price:5.0,  form:[5,7,6,8,6],    pos:"GK",  flag:"🇲🇦"},
+  {id:3, name:"A. Hakimi",  nation:"MAR", club:"PSG",         pts:118, price:7.5,  form:[9,12,8,10,11], pos:"DEF", flag:"🇲🇦"},
+  {id:4, name:"N. Nkoulou", nation:"CMR", club:"Torino",      pts:95,  price:5.5,  form:[8,7,9,8,10],   pos:"DEF", flag:"🇨🇲"},
+  {id:5, name:"K. Koulibaly",nation:"SEN",club:"Al-Hilal",   pts:102, price:6.0,  form:[10,9,11,8,9],  pos:"DEF", flag:"🇸🇳"},
+  {id:6, name:"T. Mvogo",   nation:"CMR", club:"Lorient",     pts:88,  price:5.0,  form:[7,8,9,8,9],    pos:"DEF", flag:"🇨🇲"},
+  {id:7, name:"S. Dossevi", nation:"TOG", club:"Nantes",      pts:79,  price:4.5,  form:[6,7,8,7,8],    pos:"DEF", flag:"🇹🇬"},
+  {id:8, name:"R. Mahrez",  nation:"ALG", club:"Al-Ahli",     pts:142, price:9.0,  form:[14,12,15,13,11],pos:"MID",flag:"🇩🇿"},
+  {id:9, name:"H. Ziyech",  nation:"MAR", club:"Galatasaray", pts:128, price:8.5,  form:[11,13,12,14,10],pos:"MID",flag:"🇲🇦"},
+  {id:10,name:"W. Ndidi",   nation:"NGR", club:"Leicester",   pts:115, price:7.0,  form:[10,12,11,9,12],pos:"MID", flag:"🇳🇬"},
+  {id:11,name:"I. Sarr",    nation:"SEN", club:"Watford",     pts:98,  price:6.5,  form:[9,10,8,11,9],  pos:"MID", flag:"🇸🇳"},
+  {id:12,name:"S. Amrabat", nation:"MAR", club:"Man United",  pts:107, price:7.0,  form:[10,11,9,12,10],pos:"MID", flag:"🇲🇦"},
+  {id:13,name:"V. Osimhen", nation:"NGR", club:"Galatasaray", pts:168, price:12.0, form:[16,18,15,20,17],pos:"FWD",flag:"🇳🇬"},
+  {id:14,name:"S. Mané",    nation:"SEN", club:"Al-Nassr",    pts:155, price:11.5, form:[15,16,14,18,16],pos:"FWD",flag:"🇸🇳"},
+  {id:15,name:"M. Salah",   nation:"EGY", club:"Liverpool",   pts:188, price:13.5, form:[20,19,18,22,18],pos:"FWD",flag:"🇪🇬"},
+  {id:16,name:"A. Delort",  nation:"ALG", club:"Nice",        pts:112, price:8.0,  form:[11,12,10,13,11],pos:"FWD",flag:"🇩🇿"},
+];
+
+const byId    = id  => ALL_PLAYERS.find(p => p.id === id);
+const byIds   = ids => (ids||[]).map(byId).filter(Boolean);
+
+const FIXTURES = [
+  {home:"Egypt",     away:"Nigeria",      homeFlag:"🇪🇬",awayFlag:"🇳🇬",date:"Apr 12",time:"20:00",homeCode:"EGY",awayCode:"NGR"},
+  {home:"Morocco",   away:"Senegal",      homeFlag:"🇲🇦",awayFlag:"🇸🇳",date:"Apr 12",time:"17:00",homeCode:"MAR",awayCode:"SEN"},
+  {home:"Algeria",   away:"Cameroon",     homeFlag:"🇩🇿",awayFlag:"🇨🇲",date:"Apr 13",time:"20:00",homeCode:"ALG",awayCode:"CMR"},
+  {home:"Ghana",     away:"Ivory Coast",  homeFlag:"🇬🇭",awayFlag:"🇨🇮",date:"Apr 13",time:"17:00",homeCode:"GHA",awayCode:"CIV"},
+  {home:"Tunisia",   away:"Mali",         homeFlag:"🇹🇳",awayFlag:"🇲🇱",date:"Apr 14",time:"20:00",homeCode:"TUN",awayCode:"MLI"},
+  {home:"DR Congo",  away:"South Africa", homeFlag:"🇨🇩",awayFlag:"🇿🇦",date:"Apr 14",time:"17:00",homeCode:"COD",awayCode:"RSA"},
+];
+
+const BADGES = ["🦁","🦅","🐺","🦊","⭐","🔥","🏆","⚡","🛡️","🎯"];
+
+const DEFAULT_ROW = {
+  team_name:"My Team", badge:"🦁", budget:2.5, captain_id:15,
+  gk_ids:[1], def_ids:[3,5,7], mid_ids:[8,9,12], fwd_ids:[13,14,15],
+  bench_ids:[2,4,10], gw_pts:94, total_pts:1724,
+};
+
+/* ── Styles ── */
+const css = `
+  .cd{font-family:'Barlow Condensed',sans-serif;}
+  .cb{font-family:'Barlow',sans-serif;}
+  .nb{background:none;border:none;cursor:pointer;transition:all 0.18s;}
+  .nb:hover{opacity:0.8;}
+  .ch{transition:transform 0.14s;cursor:pointer;}
+  .ch:hover{transform:translateY(-2px);}
+  .pp{transition:filter 0.14s;cursor:pointer;}
+  .pp:hover{filter:brightness(1.18);}
+  .ta{border-bottom:3px solid ${C.gold}!important;color:${C.gold}!important;}
+  .fi{animation:fi 0.35s ease;}
+  @keyframes fi{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .pl{animation:pl 2s infinite;}
+  @keyframes pl{0%,100%{opacity:1;}50%{opacity:0.5;}}
+  .sr:nth-child(even){background:rgba(255,255,255,0.03);}
+  .geo{background-image:repeating-linear-gradient(45deg,rgba(212,160,23,0.04) 0,rgba(212,160,23,0.04) 1px,transparent 1px,transparent 8px),repeating-linear-gradient(-45deg,rgba(212,160,23,0.04) 0,rgba(212,160,23,0.04) 1px,transparent 1px,transparent 8px);}
+  .inp{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(212,160,23,0.25);border-radius:8px;padding:11px 14px;color:#F5EDD6;font-size:15px;font-family:'Barlow',sans-serif;outline:none;transition:border 0.2s;}
+  .inp:focus{border-color:${C.gold};}
+  .inp::placeholder{color:#8A7D65;}
+  .btn-gold{background:${C.gold};color:${C.dark};border:none;border-radius:8px;padding:12px 24px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:opacity 0.15s;width:100%;}
+  .btn-gold:hover{opacity:0.88;}
+  .btn-gold:disabled{opacity:0.4;cursor:not-allowed;}
+  .save-dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+`;
+
+/* ── Save indicator ── */
+function SaveDot({status}) {
+  const colors = {idle:"transparent", saving:C.amber, saved:C.sage, error:C.error};
+  return <span className="save-dot" style={{background:colors[status]||"transparent",marginLeft:6,verticalAlign:"middle",transition:"background 0.3s"}} title={status}/>;
+}
+
+/* ── Login Screen ── */
+function LoginScreen({onLogin}) {
+  const [username, setUsername]   = useState("");
+  const [teamName, setTeamName]   = useState("");
+  const [badge, setBadge]         = useState("🦁");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
+  const [isNew, setIsNew]         = useState(false);
+  const [checked, setChecked]     = useState(false);
+
+  async function checkUsername() {
+    const u = username.trim().toLowerCase();
+    if (!u) return;
+    const {data} = await sb.from("teams").select("id,team_name").eq("username",u).maybeSingle();
+    setIsNew(!data);
+    if (data) setTeamName(data.team_name);
+    setChecked(true);
+  }
+
+  async function handleSubmit() {
+    const u = username.trim().toLowerCase();
+    if (!u) return setError("Enter a username");
+    setLoading(true); setError("");
+    try {
+      if (isNew) {
+        const tn = teamName.trim() || u+"'s XI";
+        const {data, error: err} = await sb.from("teams")
+          .insert({...DEFAULT_ROW, username:u, team_name:tn, badge})
+          .select().single();
+        if (err) throw err;
+        localStorage.setItem("caf_username", u);
+        onLogin(data);
+      } else {
+        const {data, error: err} = await sb.from("teams").select("*").eq("username",u).single();
+        if (err) throw err;
+        localStorage.setItem("caf_username", u);
+        onLogin(data);
+      }
+    } catch(e) {
+      setError(e.message||"Something went wrong");
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div style={{minHeight:"100vh",background:C.forest,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
+      <style>{css}</style>
+      <div style={{width:"100%",maxWidth:380}}>
+        {/* Logo */}
+        <div style={{textAlign:"center",marginBottom:36}}>
+          <div style={{width:64,height:64,background:C.gold,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,margin:"0 auto 14px"}}>⚽</div>
+          <div className="cd" style={{fontSize:32,fontWeight:800,color:C.gold,letterSpacing:2}}>CAF FANTASY</div>
+          <div className="cb" style={{fontSize:11,color:C.muted,letterSpacing:4,textTransform:"uppercase",marginTop:3}}>Africa Cup · 2025/26</div>
+        </div>
+
+        <div style={{background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:14,padding:24,display:"flex",flexDirection:"column",gap:14}}>
+          <div>
+            <label className="cb" style={{fontSize:11,color:C.muted,letterSpacing:1,textTransform:"uppercase",display:"block",marginBottom:6}}>Username</label>
+            <div style={{display:"flex",gap:8}}>
+              <input className="inp cb" value={username} onChange={e=>{setUsername(e.target.value);setChecked(false);}} onKeyDown={e=>e.key==="Enter"&&checkUsername()} placeholder="e.g. ahmed_k" style={{flex:1}}/>
+              {!checked&&<button className="nb cb" onClick={checkUsername}
+                style={{background:C.sage+"40",border:`1px solid ${C.sage}`,borderRadius:8,padding:"0 14px",color:C.cream,fontSize:13,fontWeight:600,whiteSpace:"nowrap"}}>
+                Go →
+              </button>}
+            </div>
+          </div>
+
+          {checked && isNew && (
+            <>
+              <div className="cb" style={{fontSize:12,color:C.amber,padding:"8px 12px",background:C.amber+"15",borderRadius:8,border:`1px solid ${C.amber}30`}}>
+                ✨ New manager! Set up your team below.
+              </div>
+              <div>
+                <label className="cb" style={{fontSize:11,color:C.muted,letterSpacing:1,textTransform:"uppercase",display:"block",marginBottom:6}}>Team Name</label>
+                <input className="inp cb" value={teamName} onChange={e=>setTeamName(e.target.value)} placeholder="e.g. Desert Eagles FC"/>
+              </div>
+              <div>
+                <label className="cb" style={{fontSize:11,color:C.muted,letterSpacing:1,textTransform:"uppercase",display:"block",marginBottom:8}}>Team Badge</label>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {BADGES.map(b=>(
+                    <button key={b} className="nb" onClick={()=>setBadge(b)}
+                      style={{width:40,height:40,borderRadius:8,border:`2px solid ${badge===b?C.gold:C.gold+"20"}`,background:badge===b?C.gold+"20":"transparent",fontSize:20,cursor:"pointer"}}>
+                      {b}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {checked && !isNew && (
+            <div className="cb" style={{fontSize:12,color:C.sage,padding:"8px 12px",background:C.sage+"20",borderRadius:8,border:`1px solid ${C.sage}30`}}>
+              👋 Welcome back! Loading your team…
+            </div>
+          )}
+
+          {error && <div className="cb" style={{fontSize:12,color:C.terracotta,padding:"8px 12px",background:C.terracotta+"15",borderRadius:8}}>{error}</div>}
+
+          {checked && (
+            <button className="btn-gold" onClick={handleSubmit} disabled={loading}>
+              {loading ? "Loading…" : isNew ? "Create Team" : "Enter"}
+            </button>
+          )}
+        </div>
+
+        <div className="cb" style={{fontSize:11,color:C.muted,textAlign:"center",marginTop:16}}>
+          No password needed · Each player picks their own username
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main App ── */
+function App() {
+  const [teamRow, setTeamRow]     = useState(null);    // raw DB row
+  const [tab, setTab]             = useState("dashboard");
+  const [saveStatus, setSaveStatus] = useState("idle"); // idle|saving|saved|error
+  const [filterPos, setFilterPos] = useState("ALL");
+  const [sortBy, setSortBy]       = useState("pts");
+  const [selected, setSelected]   = useState(null);
+  const [leagueData, setLeagueData] = useState([]);
+  const [leagueLoading, setLeagueLoading] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const saveTimer = useRef(null);
+
+  /* ── Derived squad ── */
+  const squad = teamRow ? {
+    GK:    byIds(teamRow.gk_ids),
+    DEF:   byIds(teamRow.def_ids),
+    MID:   byIds(teamRow.mid_ids),
+    FWD:   byIds(teamRow.fwd_ids),
+    BENCH: byIds(teamRow.bench_ids),
+  } : null;
+
+  const squadList = squad ? [...squad.GK,...squad.DEF,...squad.MID,...squad.FWD,...squad.BENCH] : [];
+  const squadIds  = new Set(squadList.map(p=>p.id));
+
+  /* ── Auto-save (debounced 800ms) ── */
+  const scheduleSave = useCallback((row) => {
+    clearTimeout(saveTimer.current);
+    setSaveStatus("saving");
+    saveTimer.current = setTimeout(async () => {
+      const {error} = await sb.from("teams").update({
+        team_name: row.team_name, badge: row.badge,
+        budget: row.budget, captain_id: row.captain_id,
+        gk_ids: row.gk_ids, def_ids: row.def_ids,
+        mid_ids: row.mid_ids, fwd_ids: row.fwd_ids,
+        bench_ids: row.bench_ids,
+      }).eq("id", row.id);
+      setSaveStatus(error ? "error" : "saved");
+      setTimeout(()=>setSaveStatus("idle"), 2000);
+    }, 800);
+  }, []);
+
+  function update(patch) {
+    setTeamRow(prev => {
+      const next = {...prev, ...patch};
+      scheduleSave(next);
+      return next;
+    });
+  }
+
+  /* ── Fetch league ── */
+  async function fetchLeague() {
+    setLeagueLoading(true);
+    const {data} = await sb.from("teams").select("username,team_name,badge,gw_pts,total_pts").order("total_pts",{ascending:false});
+    if (data) setLeagueData(data.map((r,i)=>({...r,rank:i+1})));
+    setLeagueLoading(false);
+  }
+
+  useEffect(()=>{ if(tab==="league") fetchLeague(); }, [tab]);
+
+  /* ── Transfers ── */
+  const avail = ALL_PLAYERS
+    .filter(p=>filterPos==="ALL"||p.pos===filterPos)
+    .filter(p=>!squadIds.has(p.id))
+    .sort((a,b)=>sortBy==="pts"?b.pts-a.pts:a.price-b.price);
+
+  function confirmTransfer() {
+    if (!selected || !teamRow) return;
+    const pos = selected.pos;
+    const key = pos==="GK"?"gk_ids":pos==="DEF"?"def_ids":pos==="MID"?"mid_ids":"fwd_ids";
+    // Add to position (replace last bench player if over limit)
+    const newIds = [...(teamRow[key]||[]), selected.id];
+    update({ [key]: newIds, budget: +(teamRow.budget - selected.price).toFixed(1) });
+    setSelected(null);
+  }
+
+  function setCaptain(id) { update({captain_id:id}); }
+
+  const nav = [
+    {id:"dashboard",label:"Dashboard",icon:"◈"},
+    {id:"squad",    label:"My Squad",  icon:"⚽"},
+    {id:"transfers",label:"Transfers", icon:"⇄"},
+    {id:"league",   label:"League",    icon:"🏆"},
+    {id:"fixtures", label:"Fixtures",  icon:"📅"},
+  ];
+
+  if (!teamRow) return null;
+
+  const gwPts    = teamRow.gw_pts;
+  const totalPts = teamRow.total_pts;
+  const budget   = teamRow.budget;
+  const captain  = teamRow.captain_id;
+
+  return (
+    <div className="cb" style={{background:C.forest,minHeight:"100vh",color:C.cream}}>
+      <style>{css}</style>
+
+      {/* ── Header ── */}
+      <div className="geo" style={{background:C.dark,borderBottom:`2px solid ${C.gold}30`,position:"sticky",top:0,zIndex:100}}>
+        <div style={{maxWidth:900,margin:"0 auto",padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,background:C.gold,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚽</div>
+            <div>
+              <div className="cd" style={{fontSize:21,fontWeight:800,letterSpacing:1,color:C.gold,lineHeight:1}}>CAF FANTASY</div>
+              <div style={{fontSize:9,color:C.muted,letterSpacing:3,textTransform:"uppercase"}}>Africa Cup · 2025/26</div>
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{textAlign:"right"}}>
+              <div className="cd" style={{fontSize:17,fontWeight:700,color:C.amber}}>
+                GW 27 <SaveDot status={saveStatus}/>
+              </div>
+              <div style={{fontSize:9,color:C.muted}}>{teamRow.username}</div>
+            </div>
+            <div style={{width:34,height:34,borderRadius:"50%",background:C.sage,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,border:`2px solid ${C.gold}40`}}>{teamRow.badge}</div>
+          </div>
+        </div>
+        <div style={{maxWidth:900,margin:"0 auto",display:"flex",borderTop:`1px solid ${C.gold}15`}}>
+          {nav.map(n=>(
+            <button key={n.id} className={`nb cb${tab===n.id?" ta":""}`} onClick={()=>setTab(n.id)}
+              style={{flex:1,padding:"9px 4px",fontSize:11,fontWeight:600,color:tab===n.id?C.gold:C.muted,borderBottom:"3px solid transparent",letterSpacing:0.3,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+              <span style={{fontSize:13}}>{n.icon}</span><span>{n.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{maxWidth:900,margin:"0 auto",padding:"14px 12px"}} className="fi">
+
+        {/* ── DASHBOARD ── */}
+        {tab==="dashboard"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            {/* Team name banner */}
+            <div style={{background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+              {editingName ? (
+                <>
+                  <input className="inp cb" value={nameInput} onChange={e=>setNameInput(e.target.value)} style={{flex:1,fontSize:16}}/>
+                  <button className="nb" onClick={()=>{update({team_name:nameInput.trim()||teamRow.team_name});setEditingName(false);}}
+                    style={{background:C.gold,color:C.dark,borderRadius:6,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Save</button>
+                </>
+              ) : (
+                <>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:26}}>{teamRow.badge}</span>
+                    <div>
+                      <div className="cd" style={{fontSize:20,fontWeight:800,color:C.gold,lineHeight:1}}>{teamRow.team_name}</div>
+                      <div style={{fontSize:10,color:C.muted}}>Manager: {teamRow.username}</div>
+                    </div>
+                  </div>
+                  <button className="nb" onClick={()=>{setNameInput(teamRow.team_name);setEditingName(true);}}
+                    style={{fontSize:11,color:C.muted,border:`1px solid ${C.gold}20`,borderRadius:6,padding:"5px 10px"}}>✏️ Edit</button>
+                </>
+              )}
+            </div>
+
+            {/* Stats */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+              {[{l:"GW Points",v:gwPts,s:"Rank #1,204",i:"⚡"},{l:"Total Points",v:totalPts.toLocaleString(),s:"Season total",i:"🏅"},{l:"Budget",v:`£${budget.toFixed(1)}m`,s:"Remaining",i:"💰"}].map(s=>(
+                <div key={s.l} className="ch" style={{background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+                  <div style={{fontSize:20}}>{s.i}</div>
+                  <div className="cd" style={{fontSize:24,fontWeight:800,color:C.gold,lineHeight:1.1}}>{s.v}</div>
+                  <div style={{fontSize:10,color:C.muted,marginTop:2}}>{s.l}</div>
+                  <div style={{fontSize:9,color:C.sage,marginTop:1}}>{s.s}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Next fixture */}
+            <div style={{background:`linear-gradient(135deg,${C.sage}50,${C.dark})`,border:`1px solid ${C.sage}40`,borderRadius:12,padding:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+                <div style={{fontSize:10,color:C.muted,letterSpacing:2,textTransform:"uppercase"}}>GW28 · Next Fixture</div>
+                <div className="pl" style={{fontSize:11,color:C.amber,fontWeight:600}}>⏰ 5d 14h left</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:20}}>
+                <div style={{textAlign:"center"}}><div style={{fontSize:32}}>🇪🇬</div><div className="cd" style={{fontSize:14,fontWeight:700}}>EGYPT</div></div>
+                <div style={{textAlign:"center"}}><div className="cd" style={{fontSize:24,fontWeight:800,color:C.gold}}>VS</div><div style={{fontSize:10,color:C.muted}}>Apr 12 · 20:00</div></div>
+                <div style={{textAlign:"center"}}><div style={{fontSize:32}}>🇳🇬</div><div className="cd" style={{fontSize:14,fontWeight:700}}>NIGERIA</div></div>
+              </div>
+            </div>
+
+            {/* Top performers */}
+            <div>
+              <div className="cd" style={{fontSize:15,fontWeight:700,color:C.gold,letterSpacing:1,marginBottom:10,borderLeft:`3px solid ${C.gold}`,paddingLeft:10}}>TOP PERFORMERS · GW27</div>
+              {[ALL_PLAYERS[14],ALL_PLAYERS[13],ALL_PLAYERS[7],ALL_PLAYERS[2]].map((p,i)=>(
+                <div key={p.id} className="ch" style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <div className="cd" style={{fontSize:18,fontWeight:800,color:i===0?C.gold:C.muted,width:24}}>#{i+1}</div>
+                  <div style={{fontSize:20}}>{p.flag}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:600}}>{p.name}</div>
+                    <div style={{fontSize:10,color:C.muted}}>{p.club} · {p.pos}</div>
+                  </div>
+                  <div style={{display:"flex",gap:3}}>
+                    {p.form.map((f,fi)=>(
+                      <div key={fi} style={{width:19,height:19,borderRadius:3,background:f>=12?C.gold+"40":C.sage+"30",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <span style={{fontSize:8,fontWeight:700,color:f>=12?C.amber:C.muted}}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="cd" style={{fontSize:19,fontWeight:800,color:C.amber,minWidth:32,textAlign:"right"}}>{p.form[4]}</div>
+                </div>
+              ))}
+            </div>
+
+            <button className="nb ch cb" onClick={()=>setTab("transfers")}
+              style={{background:C.gold,color:C.dark,borderRadius:10,padding:"13px",fontWeight:700,fontSize:14,width:"100%",textAlign:"center"}}>
+              Make a Transfer →
+            </button>
+          </div>
+        )}
+
+        {/* ── MY SQUAD ── */}
+        {tab==="squad"&&squad&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <div>
+                <div className="cd" style={{fontSize:18,fontWeight:800,color:C.gold,letterSpacing:1}}>{teamRow.team_name}</div>
+                <div style={{fontSize:10,color:C.muted}}>Tap player to set as captain</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:10,color:C.muted}}>GW Pts</div>
+                <div className="cd" style={{fontSize:24,fontWeight:800,color:C.amber}}>{gwPts}</div>
+              </div>
+            </div>
+
+            {/* Pitch view */}
+            <div style={{background:C.pitch,borderRadius:14,overflow:"hidden",border:`2px solid ${C.sage}60`,position:"relative"}}>
+              <div style={{position:"absolute",inset:0,opacity:0.18,pointerEvents:"none"}}>
+                <div style={{position:"absolute",top:"50%",left:"8%",right:"8%",height:1,background:"white"}}/>
+                <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:68,height:68,borderRadius:"50%",border:"1px solid white"}}/>
+                <div style={{position:"absolute",top:0,left:"22%",right:"22%",height:"18%",border:"1px solid white",borderTop:"none"}}/>
+                <div style={{position:"absolute",bottom:0,left:"22%",right:"22%",height:"18%",border:"1px solid white",borderBottom:"none"}}/>
+              </div>
+              {[{pos:"GK",pl:squad.GK},{pos:"DEF",pl:squad.DEF},{pos:"MID",pl:squad.MID},{pos:"FWD",pl:squad.FWD}].map(row=>(
+                <div key={row.pos} style={{display:"flex",justifyContent:"center",gap:6,padding:"12px 4px",position:"relative"}}>
+                  {row.pl.map(p=>{
+                    const isCap=p.id===captain;
+                    return(
+                      <div key={p.id} className="pp" onClick={()=>setCaptain(p.id)} style={{textAlign:"center",minWidth:62,position:"relative"}}>
+                        <div style={{position:"relative",display:"inline-block"}}>
+                          <div style={{width:44,height:44,borderRadius:"50%",background:C.dark,border:`2px solid ${isCap?C.gold:C.sage}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,margin:"0 auto"}}>{p.flag}</div>
+                          {isCap&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:C.gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:900,color:C.dark}}>C</div>}
+                        </div>
+                        <div style={{background:posColors[p.pos].bg,borderRadius:5,padding:"2px 3px",marginTop:3}}>
+                          <div style={{fontSize:10,fontWeight:600,color:posColors[p.pos].text,lineHeight:1.2}}>{p.name.split(" ").pop()}</div>
+                        </div>
+                        <div className="cd" style={{fontSize:11,fontWeight:700,color:C.amber,marginTop:1}}>{isCap?p.form[4]*2:p.form[4]}pts</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+              <div style={{background:"rgba(0,0,0,0.3)",borderTop:`1px dashed ${C.gold}30`,padding:"8px 6px"}}>
+                <div style={{fontSize:9,color:C.muted,textAlign:"center",letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>Bench</div>
+                <div style={{display:"flex",justifyContent:"center",gap:8}}>
+                  {squad.BENCH.map(p=>(
+                    <div key={p.id} style={{textAlign:"center",minWidth:54,opacity:0.65}}>
+                      <div style={{width:36,height:36,borderRadius:"50%",background:C.dark,border:`1px solid ${C.muted}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto"}}>{p.flag}</div>
+                      <div style={{background:posColors[p.pos].bg+"70",borderRadius:4,padding:"1px 3px",marginTop:2}}>
+                        <div style={{fontSize:9,color:posColors[p.pos].text}}>{p.name.split(" ").pop()}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* List */}
+            <div style={{marginTop:14}}>
+              <div className="cd" style={{fontSize:14,fontWeight:700,color:C.gold,letterSpacing:1,marginBottom:10,borderLeft:`3px solid ${C.gold}`,paddingLeft:10}}>SQUAD DETAIL</div>
+              {["GK","DEF","MID","FWD"].map(pos=>(
+                <div key={pos} style={{marginBottom:12}}>
+                  <div style={{fontSize:10,letterSpacing:2,color:C.muted,textTransform:"uppercase",marginBottom:5}}>{pos}</div>
+                  {squad[pos].map(p=>(
+                    <div key={p.id} className="sr" style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:6}}>
+                      <span style={{fontSize:17}}>{p.flag}</span>
+                      <div style={{flex:1}}>
+                        <span style={{fontSize:13,fontWeight:600}}>{p.name}</span>
+                        {p.id===captain&&<span style={{marginLeft:6,background:C.gold,color:C.dark,fontSize:9,fontWeight:800,padding:"1px 5px",borderRadius:3}}>CAP</span>}
+                        <div style={{fontSize:10,color:C.muted}}>{p.club}</div>
+                      </div>
+                      <div style={{display:"flex",gap:3}}>
+                        {p.form.map((f,fi)=>(
+                          <div key={fi} style={{width:17,height:17,borderRadius:3,background:f>=12?C.gold+"40":C.sage+"20",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                            <span style={{fontSize:8,fontWeight:700,color:f>=12?C.amber:C.muted}}>{f}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="cd" style={{fontSize:15,fontWeight:700,color:C.amber,minWidth:34,textAlign:"right"}}>{p.pts}</div>
+                      <div style={{fontSize:11,color:C.muted,minWidth:38,textAlign:"right"}}>£{p.price}m</div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── TRANSFERS ── */}
+        {tab==="transfers"&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div>
+                <div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>TRANSFER MARKET</div>
+                <div style={{fontSize:10,color:C.muted}}>Select a player · confirm to add</div>
+              </div>
+              <div style={{background:C.dark,border:`1px solid ${C.gold}30`,borderRadius:8,padding:"7px 12px",textAlign:"center"}}>
+                <div style={{fontSize:9,color:C.muted}}>Budget</div>
+                <div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold}}>£{budget.toFixed(1)}m</div>
+              </div>
+            </div>
+
+            <div style={{display:"flex",gap:7,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+              {["ALL","GK","DEF","MID","FWD"].map(pos=>(
+                <button key={pos} className="nb cb" onClick={()=>setFilterPos(pos)}
+                  style={{background:filterPos===pos?C.gold:C.dark,color:filterPos===pos?C.dark:C.muted,border:`1px solid ${filterPos===pos?C.gold:C.gold+"20"}`,borderRadius:6,padding:"6px 12px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
+                  {pos}
+                </button>
+              ))}
+              <div style={{flex:1}}/>
+              {["pts","price"].map(s=>(
+                <button key={s} className="nb cb" onClick={()=>setSortBy(s)}
+                  style={{background:sortBy===s?C.sage+"60":C.dark,color:sortBy===s?C.cream:C.muted,border:`1px solid ${C.gold}20`,borderRadius:6,padding:"6px 10px",fontSize:10,whiteSpace:"nowrap"}}>
+                  {s==="pts"?"↓ Points":"↑ Price"}
+                </button>
+              ))}
+            </div>
+
+            {avail.map(p=>{
+              const ok=p.price<=budget;
+              return(
+                <div key={p.id} className="ch" onClick={()=>ok&&setSelected(selected?.id===p.id?null:p)}
+                  style={{background:C.dark,border:`1px solid ${selected?.id===p.id?C.gold:C.gold+"15"}`,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10,opacity:ok?1:0.4,marginBottom:8}}>
+                  <div style={{width:40,height:40,borderRadius:"50%",background:posColors[p.pos].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:`2px solid ${posColors[p.pos].text}40`}}>{p.flag}</div>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:5}}>
+                      <div style={{fontSize:13,fontWeight:600}}>{p.name}</div>
+                      <span style={{background:posColors[p.pos].bg,color:posColors[p.pos].text,fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:3}}>{p.pos}</span>
+                    </div>
+                    <div style={{fontSize:10,color:C.muted}}>{p.club}</div>
+                  </div>
+                  <div style={{display:"flex",gap:3}}>
+                    {p.form.map((f,fi)=>(
+                      <div key={fi} style={{width:18,height:18,borderRadius:3,background:f>=12?C.gold+"30":C.sage+"20",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <span style={{fontSize:8,fontWeight:600,color:f>=12?C.amber:C.muted}}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div className="cd" style={{fontSize:16,fontWeight:800,color:C.amber}}>{p.pts}</div>
+                    <div style={{fontSize:11,color:ok?C.gold:C.terracotta,fontWeight:600}}>£{p.price}m</div>
+                  </div>
+                  {ok&&<div style={{width:25,height:25,borderRadius:"50%",background:selected?.id===p.id?C.gold:C.sage+"40",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:selected?.id===p.id?C.dark:C.sage,flexShrink:0}}>{selected?.id===p.id?"✓":"+"}</div>}
+                </div>
+              );
+            })}
+
+            {selected&&(
+              <div style={{position:"sticky",bottom:16,marginTop:12,background:C.gold,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:10,color:C.dark+"80",fontWeight:600}}>ADDING</div>
+                  <div className="cd" style={{fontSize:16,fontWeight:800,color:C.dark}}>{selected.flag} {selected.name}</div>
+                </div>
+                <button className="nb cb" onClick={confirmTransfer}
+                  style={{background:C.dark,color:C.gold,borderRadius:8,padding:"8px 16px",fontWeight:700,fontSize:12,cursor:"pointer"}}>
+                  Confirm · £{selected.price}m
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── LEAGUE ── */}
+        {tab==="league"&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div>
+                <div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>LIVE LEADERBOARD</div>
+                <div style={{fontSize:10,color:C.muted}}>All managers · live from database</div>
+              </div>
+              <button className="nb cb" onClick={fetchLeague} style={{fontSize:11,color:C.muted,border:`1px solid ${C.gold}20`,borderRadius:6,padding:"5px 10px"}}>
+                {leagueLoading?"…":"↻ Refresh"}
+              </button>
+            </div>
+
+            {leagueData.length > 0 && (
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14,alignItems:"end"}}>
+                {[leagueData[1],leagueData[0],leagueData[2]].filter(Boolean).map((m,i)=>{
+                  const h=[110,130,95][i];
+                  const r=i===0?2:i===1?1:3;
+                  const rc=r===1?C.gold:r===2?"#C0C0C0":"#CD7F32";
+                  return(
+                    <div key={m.username} style={{textAlign:"center"}}>
+                      <div style={{fontSize:20,marginBottom:2}}>{m.badge}</div>
+                      <div style={{fontSize:11,fontWeight:600,marginBottom:2,color:m.username===teamRow.username?C.gold:C.cream}}>{m.team_name}</div>
+                      <div style={{background:rc+"20",border:`1px solid ${rc}40`,borderRadius:"8px 8px 0 0",height:h,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",padding:8}}>
+                        <div className="cd" style={{fontSize:24,fontWeight:800,color:rc}}>{r}</div>
+                        <div className="cd" style={{fontSize:14,fontWeight:700,color:C.amber}}>{m.total_pts.toLocaleString()}</div>
+                        <div style={{fontSize:10,color:C.muted}}>pts</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:12,overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"28px 1fr 54px 42px",padding:"7px 12px",borderBottom:`1px solid ${C.gold}20`}}>
+                {["#","Team","Total","GW"].map(h=>(
+                  <div key={h} style={{fontSize:9,color:C.muted,fontWeight:600,letterSpacing:1,textTransform:"uppercase",textAlign:h!=="Team"?"center":"left"}}>{h}</div>
+                ))}
+              </div>
+              {leagueLoading&&<div style={{padding:"20px",textAlign:"center",color:C.muted,fontSize:13}}>Loading…</div>}
+              {!leagueLoading&&leagueData.length===0&&<div style={{padding:"20px",textAlign:"center",color:C.muted,fontSize:13}}>No managers yet — share the link!</div>}
+              {leagueData.map((m,i)=>(
+                <div key={m.username} className="sr" style={{display:"grid",gridTemplateColumns:"28px 1fr 54px 42px",padding:"9px 12px",alignItems:"center",borderLeft:m.username===teamRow.username?`3px solid ${C.gold}`:"3px solid transparent"}}>
+                  <div className="cd" style={{fontSize:14,fontWeight:800,color:i<3?C.gold:C.muted,textAlign:"center"}}>{i+1}</div>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:m.username===teamRow.username?700:500,color:m.username===teamRow.username?C.gold:C.cream}}>{m.badge} {m.team_name}</div>
+                    <div style={{fontSize:9,color:C.muted}}>{m.username}</div>
+                  </div>
+                  <div className="cd" style={{fontSize:14,fontWeight:700,color:C.amber,textAlign:"center"}}>{m.total_pts.toLocaleString()}</div>
+                  <div style={{fontSize:11,color:C.muted,textAlign:"center"}}>{m.gw_pts}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── FIXTURES ── */}
+        {tab==="fixtures"&&(
+          <div>
+            <div style={{marginBottom:14}}>
+              <div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>FIXTURES</div>
+              <div style={{fontSize:10,color:C.muted}}>Gameweek 28 · Apr 12–14, 2026</div>
+            </div>
+            {FIXTURES.map((f,i)=>{
+              const myPl=squadList.filter(p=>p.nation===f.homeCode||p.nation===f.awayCode);
+              return(
+                <div key={i} className="ch" style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                    <div style={{fontSize:9,color:C.muted,letterSpacing:1}}>GW28 · {f.date}</div>
+                    <div style={{fontSize:10,color:C.amber,fontWeight:600}}>{f.time} CAT</div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{flex:1,textAlign:"center"}}><div style={{fontSize:28}}>{f.homeFlag}</div><div className="cd" style={{fontSize:12,fontWeight:700,marginTop:3}}>{f.home.toUpperCase()}</div></div>
+                    <div style={{textAlign:"center",padding:"5px 10px",background:C.sage+"30",borderRadius:8}}><div className="cd" style={{fontSize:16,fontWeight:800,color:C.gold}}>VS</div></div>
+                    <div style={{flex:1,textAlign:"center"}}><div style={{fontSize:28}}>{f.awayFlag}</div><div className="cd" style={{fontSize:12,fontWeight:700,marginTop:3}}>{f.away.toUpperCase()}</div></div>
+                  </div>
+                  {myPl.length>0&&(
+                    <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.gold}15`}}>
+                      <div style={{fontSize:9,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Your players</div>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {myPl.map(p=>(
+                          <div key={p.id} style={{display:"flex",alignItems:"center",gap:4,background:posColors[p.pos].bg+"50",borderRadius:6,padding:"3px 8px"}}>
+                            <span style={{fontSize:12}}>{p.flag}</span>
+                            <span style={{fontSize:11,color:posColors[p.pos].text,fontWeight:600}}>{p.name.split(" ").pop()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+/* ── Root with login gate ── */
+function Root() {
+  const [teamRow, setTeamRow] = useState(null);
+  const [booting, setBooting] = useState(true);
+
+  useEffect(()=>{
+    const saved = localStorage.getItem("caf_username");
+    if (saved) {
+      sb.from("teams").select("*").eq("username",saved).maybeSingle()
+        .then(({data})=>{ if(data) setTeamRow(data); setBooting(false); });
+    } else {
+      setBooting(false);
+    }
+  },[]);
+
+  if (booting) return (
+    <div style={{minHeight:"100vh",background:"#0B2A1A",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:22,fontWeight:800,color:"#D4A017",letterSpacing:2}}>CAF FANTASY</div>
+    </div>
+  );
+
+  if (!teamRow) return <LoginScreen onLogin={setTeamRow}/>;
+
+  return <App key={teamRow.id} initialTeam={teamRow}/>;
+}
+
+/* Re-wire App to accept initialTeam prop */
+const _App = App;
+function App({initialTeam}) {
+  const [teamRow, setTeamRow] = useState(initialTeam);
+  // ... rest of App uses teamRow state
+
+  const [tab, setTab]             = useState("dashboard");
+  const [saveStatus, setSaveStatus] = useState("idle");
+  const [filterPos, setFilterPos] = useState("ALL");
+  const [sortBy, setSortBy]       = useState("pts");
+  const [selected, setSelected]   = useState(null);
+  const [leagueData, setLeagueData] = useState([]);
+  const [leagueLoading, setLeagueLoading] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const saveTimer = useRef(null);
+
+  const squad = teamRow ? {
+    GK:    byIds(teamRow.gk_ids),
+    DEF:   byIds(teamRow.def_ids),
+    MID:   byIds(teamRow.mid_ids),
+    FWD:   byIds(teamRow.fwd_ids),
+    BENCH: byIds(teamRow.bench_ids),
+  } : null;
+
+  const squadList = squad ? [...squad.GK,...squad.DEF,...squad.MID,...squad.FWD,...squad.BENCH] : [];
+  const squadIds  = new Set(squadList.map(p=>p.id));
+
+  const scheduleSave = useCallback((row) => {
+    clearTimeout(saveTimer.current);
+    setSaveStatus("saving");
+    saveTimer.current = setTimeout(async () => {
+      const {error} = await sb.from("teams").update({
+        team_name:row.team_name,badge:row.badge,budget:row.budget,
+        captain_id:row.captain_id,gk_ids:row.gk_ids,def_ids:row.def_ids,
+        mid_ids:row.mid_ids,fwd_ids:row.fwd_ids,bench_ids:row.bench_ids,
+      }).eq("id",row.id);
+      setSaveStatus(error?"error":"saved");
+      setTimeout(()=>setSaveStatus("idle"),2000);
+    },800);
+  },[]);
+
+  function update(patch) {
+    setTeamRow(prev=>{const next={...prev,...patch};scheduleSave(next);return next;});
+  }
+
+  async function fetchLeague() {
+    setLeagueLoading(true);
+    const {data} = await sb.from("teams").select("username,team_name,badge,gw_pts,total_pts").order("total_pts",{ascending:false});
+    if(data) setLeagueData(data.map((r,i)=>({...r,rank:i+1})));
+    setLeagueLoading(false);
+  }
+
+  useEffect(()=>{if(tab==="league")fetchLeague();},[tab]);
+
+  const avail = ALL_PLAYERS
+    .filter(p=>filterPos==="ALL"||p.pos===filterPos)
+    .filter(p=>!squadIds.has(p.id))
+    .sort((a,b)=>sortBy==="pts"?b.pts-a.pts:a.price-b.price);
+
+  function confirmTransfer(){
+    if(!selected||!teamRow)return;
+    const pos=selected.pos;
+    const key=pos==="GK"?"gk_ids":pos==="DEF"?"def_ids":pos==="MID"?"mid_ids":"fwd_ids";
+    update({[key]:[...(teamRow[key]||[]),selected.id],budget:+(teamRow.budget-selected.price).toFixed(1)});
+    setSelected(null);
+  }
+
+  const gwPts=teamRow.gw_pts,totalPts=teamRow.total_pts,budget=teamRow.budget,captain=teamRow.captain_id;
+
+  const nav=[
+    {id:"dashboard",label:"Dashboard",icon:"◈"},
+    {id:"squad",    label:"My Squad",  icon:"⚽"},
+    {id:"transfers",label:"Transfers", icon:"⇄"},
+    {id:"league",   label:"League",    icon:"🏆"},
+    {id:"fixtures", label:"Fixtures",  icon:"📅"},
+  ];
+
+  return(
+    <div className="cb" style={{background:C.forest,minHeight:"100vh",color:C.cream}}>
+      <style>{css}</style>
+      <div className="geo" style={{background:C.dark,borderBottom:`2px solid ${C.gold}30`,position:"sticky",top:0,zIndex:100}}>
+        <div style={{maxWidth:900,margin:"0 auto",padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,background:C.gold,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚽</div>
+            <div>
+              <div className="cd" style={{fontSize:21,fontWeight:800,letterSpacing:1,color:C.gold,lineHeight:1}}>CAF FANTASY</div>
+              <div style={{fontSize:9,color:C.muted,letterSpacing:3,textTransform:"uppercase"}}>Africa Cup · 2025/26</div>
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{textAlign:"right"}}>
+              <div className="cd" style={{fontSize:16,fontWeight:700,color:C.amber}}>GW 27 <SaveDot status={saveStatus}/></div>
+              <div style={{fontSize:9,color:C.muted}}>{teamRow.username}</div>
+            </div>
+            <div style={{width:34,height:34,borderRadius:"50%",background:C.sage,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,border:`2px solid ${C.gold}40`}}>{teamRow.badge}</div>
+          </div>
+        </div>
+        <div style={{maxWidth:900,margin:"0 auto",display:"flex",borderTop:`1px solid ${C.gold}15`}}>
+          {nav.map(n=>(
+            <button key={n.id} className={`nb cb${tab===n.id?" ta":""}`} onClick={()=>setTab(n.id)}
+              style={{flex:1,padding:"9px 4px",fontSize:11,fontWeight:600,color:tab===n.id?C.gold:C.muted,borderBottom:"3px solid transparent",letterSpacing:0.3,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+              <span style={{fontSize:13}}>{n.icon}</span><span>{n.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{maxWidth:900,margin:"0 auto",padding:"14px 12px"}} className="fi">
+
+        {tab==="dashboard"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            <div style={{background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+              {editingName?(
+                <>
+                  <input className="inp cb" value={nameInput} onChange={e=>setNameInput(e.target.value)} style={{flex:1,fontSize:15}}/>
+                  <button className="nb" onClick={()=>{update({team_name:nameInput.trim()||teamRow.team_name});setEditingName(false);}}
+                    style={{background:C.gold,color:C.dark,borderRadius:6,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Save</button>
+                </>
+              ):(
+                <>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:24}}>{teamRow.badge}</span>
+                    <div>
+                      <div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,lineHeight:1}}>{teamRow.team_name}</div>
+                      <div style={{fontSize:10,color:C.muted}}>Manager: {teamRow.username}</div>
+                    </div>
+                  </div>
+                  <button className="nb" onClick={()=>{setNameInput(teamRow.team_name);setEditingName(true);}}
+                    style={{fontSize:11,color:C.muted,border:`1px solid ${C.gold}20`,borderRadius:6,padding:"5px 10px"}}>✏️ Edit</button>
+                </>
+              )}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+              {[{l:"GW Points",v:gwPts,s:"Rank #1,204",i:"⚡"},{l:"Total Points",v:totalPts.toLocaleString(),s:"Season total",i:"🏅"},{l:"Budget Left",v:`£${budget.toFixed(1)}m`,s:"Remaining",i:"💰"}].map(s=>(
+                <div key={s.l} className="ch" style={{background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+                  <div style={{fontSize:20}}>{s.i}</div>
+                  <div className="cd" style={{fontSize:23,fontWeight:800,color:C.gold,lineHeight:1.1}}>{s.v}</div>
+                  <div style={{fontSize:10,color:C.muted,marginTop:2}}>{s.l}</div>
+                  <div style={{fontSize:9,color:C.sage,marginTop:1}}>{s.s}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:`linear-gradient(135deg,${C.sage}50,${C.dark})`,border:`1px solid ${C.sage}40`,borderRadius:12,padding:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+                <div style={{fontSize:10,color:C.muted,letterSpacing:2,textTransform:"uppercase"}}>GW28 · Next Fixture</div>
+                <div className="pl" style={{fontSize:11,color:C.amber,fontWeight:600}}>⏰ 5d 14h left</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:20}}>
+                <div style={{textAlign:"center"}}><div style={{fontSize:32}}>🇪🇬</div><div className="cd" style={{fontSize:14,fontWeight:700}}>EGYPT</div></div>
+                <div style={{textAlign:"center"}}><div className="cd" style={{fontSize:24,fontWeight:800,color:C.gold}}>VS</div><div style={{fontSize:10,color:C.muted}}>Apr 12 · 20:00</div></div>
+                <div style={{textAlign:"center"}}><div style={{fontSize:32}}>🇳🇬</div><div className="cd" style={{fontSize:14,fontWeight:700}}>NIGERIA</div></div>
+              </div>
+            </div>
+            <div>
+              <div className="cd" style={{fontSize:15,fontWeight:700,color:C.gold,letterSpacing:1,marginBottom:10,borderLeft:`3px solid ${C.gold}`,paddingLeft:10}}>TOP PERFORMERS · GW27</div>
+              {[ALL_PLAYERS[14],ALL_PLAYERS[13],ALL_PLAYERS[7],ALL_PLAYERS[2]].map((p,i)=>(
+                <div key={p.id} className="ch" style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <div className="cd" style={{fontSize:18,fontWeight:800,color:i===0?C.gold:C.muted,width:24}}>#{i+1}</div>
+                  <div style={{fontSize:20}}>{p.flag}</div>
+                  <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.name}</div><div style={{fontSize:10,color:C.muted}}>{p.club} · {p.pos}</div></div>
+                  <div style={{display:"flex",gap:3}}>{p.form.map((f,fi)=>(<div key={fi} style={{width:18,height:18,borderRadius:3,background:f>=12?C.gold+"40":C.sage+"30",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:8,fontWeight:700,color:f>=12?C.amber:C.muted}}>{f}</span></div>))}</div>
+                  <div className="cd" style={{fontSize:18,fontWeight:800,color:C.amber,minWidth:30,textAlign:"right"}}>{p.form[4]}</div>
+                </div>
+              ))}
+            </div>
+            <button className="nb ch cb" onClick={()=>setTab("transfers")} style={{background:C.gold,color:C.dark,borderRadius:10,padding:13,fontWeight:700,fontSize:14,width:"100%",textAlign:"center"}}>Make a Transfer →</button>
+          </div>
+        )}
+
+        {tab==="squad"&&squad&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <div><div className="cd" style={{fontSize:18,fontWeight:800,color:C.gold,letterSpacing:1}}>{teamRow.team_name}</div><div style={{fontSize:10,color:C.muted}}>Tap player to set as captain</div></div>
+              <div style={{textAlign:"right"}}><div style={{fontSize:10,color:C.muted}}>GW Pts</div><div className="cd" style={{fontSize:24,fontWeight:800,color:C.amber}}>{gwPts}</div></div>
+            </div>
+            <div style={{background:C.pitch,borderRadius:14,overflow:"hidden",border:`2px solid ${C.sage}60`,position:"relative"}}>
+              <div style={{position:"absolute",inset:0,opacity:0.18,pointerEvents:"none"}}>
+                <div style={{position:"absolute",top:"50%",left:"8%",right:"8%",height:1,background:"white"}}/>
+                <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:68,height:68,borderRadius:"50%",border:"1px solid white"}}/>
+                <div style={{position:"absolute",top:0,left:"22%",right:"22%",height:"18%",border:"1px solid white",borderTop:"none"}}/>
+                <div style={{position:"absolute",bottom:0,left:"22%",right:"22%",height:"18%",border:"1px solid white",borderBottom:"none"}}/>
+              </div>
+              {[{pos:"GK",pl:squad.GK},{pos:"DEF",pl:squad.DEF},{pos:"MID",pl:squad.MID},{pos:"FWD",pl:squad.FWD}].map(row=>(
+                <div key={row.pos} style={{display:"flex",justifyContent:"center",gap:6,padding:"12px 4px",position:"relative"}}>
+                  {row.pl.map(p=>{const isCap=p.id===captain;return(
+                    <div key={p.id} className="pp" onClick={()=>update({captain_id:p.id})} style={{textAlign:"center",minWidth:62,position:"relative"}}>
+                      <div style={{position:"relative",display:"inline-block"}}>
+                        <div style={{width:44,height:44,borderRadius:"50%",background:C.dark,border:`2px solid ${isCap?C.gold:C.sage}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,margin:"0 auto"}}>{p.flag}</div>
+                        {isCap&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:C.gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:900,color:C.dark}}>C</div>}
+                      </div>
+                      <div style={{background:posColors[p.pos].bg,borderRadius:5,padding:"2px 3px",marginTop:3}}><div style={{fontSize:10,fontWeight:600,color:posColors[p.pos].text,lineHeight:1.2}}>{p.name.split(" ").pop()}</div></div>
+                      <div className="cd" style={{fontSize:11,fontWeight:700,color:C.amber,marginTop:1}}>{isCap?p.form[4]*2:p.form[4]}pts</div>
+                    </div>
+                  );})}
+                </div>
+              ))}
+              <div style={{background:"rgba(0,0,0,0.3)",borderTop:`1px dashed ${C.gold}30`,padding:"8px 6px"}}>
+                <div style={{fontSize:9,color:C.muted,textAlign:"center",letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>Bench</div>
+                <div style={{display:"flex",justifyContent:"center",gap:8}}>
+                  {squad.BENCH.map(p=>(<div key={p.id} style={{textAlign:"center",minWidth:54,opacity:0.65}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:C.dark,border:`1px solid ${C.muted}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto"}}>{p.flag}</div>
+                    <div style={{background:posColors[p.pos].bg+"70",borderRadius:4,padding:"1px 3px",marginTop:2}}><div style={{fontSize:9,color:posColors[p.pos].text}}>{p.name.split(" ").pop()}</div></div>
+                  </div>))}
+                </div>
+              </div>
+            </div>
+            <div style={{marginTop:14}}>
+              <div className="cd" style={{fontSize:14,fontWeight:700,color:C.gold,letterSpacing:1,marginBottom:10,borderLeft:`3px solid ${C.gold}`,paddingLeft:10}}>SQUAD DETAIL</div>
+              {["GK","DEF","MID","FWD"].map(pos=>(
+                <div key={pos} style={{marginBottom:12}}>
+                  <div style={{fontSize:10,letterSpacing:2,color:C.muted,textTransform:"uppercase",marginBottom:5}}>{pos}</div>
+                  {squad[pos].map(p=>(<div key={p.id} className="sr" style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:6}}>
+                    <span style={{fontSize:17}}>{p.flag}</span>
+                    <div style={{flex:1}}>
+                      <span style={{fontSize:13,fontWeight:600}}>{p.name}</span>
+                      {p.id===captain&&<span style={{marginLeft:6,background:C.gold,color:C.dark,fontSize:9,fontWeight:800,padding:"1px 5px",borderRadius:3}}>CAP</span>}
+                      <div style={{fontSize:10,color:C.muted}}>{p.club}</div>
+                    </div>
+                    <div style={{display:"flex",gap:3}}>{p.form.map((f,fi)=>(<div key={fi} style={{width:17,height:17,borderRadius:3,background:f>=12?C.gold+"40":C.sage+"20",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:8,fontWeight:700,color:f>=12?C.amber:C.muted}}>{f}</span></div>))}</div>
+                    <div className="cd" style={{fontSize:15,fontWeight:700,color:C.amber,minWidth:34,textAlign:"right"}}>{p.pts}</div>
+                    <div style={{fontSize:11,color:C.muted,minWidth:38,textAlign:"right"}}>£{p.price}m</div>
+                  </div>))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab==="transfers"&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div><div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>TRANSFER MARKET</div><div style={{fontSize:10,color:C.muted}}>Select a player · confirm to add</div></div>
+              <div style={{background:C.dark,border:`1px solid ${C.gold}30`,borderRadius:8,padding:"7px 12px",textAlign:"center"}}><div style={{fontSize:9,color:C.muted}}>Budget</div><div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold}}>£{budget.toFixed(1)}m</div></div>
+            </div>
+            <div style={{display:"flex",gap:7,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+              {["ALL","GK","DEF","MID","FWD"].map(pos=>(<button key={pos} className="nb cb" onClick={()=>setFilterPos(pos)} style={{background:filterPos===pos?C.gold:C.dark,color:filterPos===pos?C.dark:C.muted,border:`1px solid ${filterPos===pos?C.gold:C.gold+"20"}`,borderRadius:6,padding:"6px 12px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>{pos}</button>))}
+              <div style={{flex:1}}/>
+              {["pts","price"].map(s=>(<button key={s} className="nb cb" onClick={()=>setSortBy(s)} style={{background:sortBy===s?C.sage+"60":C.dark,color:sortBy===s?C.cream:C.muted,border:`1px solid ${C.gold}20`,borderRadius:6,padding:"6px 10px",fontSize:10,whiteSpace:"nowrap"}}>{s==="pts"?"↓ Points":"↑ Price"}</button>))}
+            </div>
+            {avail.map(p=>{const ok=p.price<=budget;return(
+              <div key={p.id} className="ch" onClick={()=>ok&&setSelected(selected?.id===p.id?null:p)} style={{background:C.dark,border:`1px solid ${selected?.id===p.id?C.gold:C.gold+"15"}`,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10,opacity:ok?1:0.4,marginBottom:8}}>
+                <div style={{width:40,height:40,borderRadius:"50%",background:posColors[p.pos].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:`2px solid ${posColors[p.pos].text}40`,flexShrink:0}}>{p.flag}</div>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{fontSize:13,fontWeight:600}}>{p.name}</div><span style={{background:posColors[p.pos].bg,color:posColors[p.pos].text,fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:3}}>{p.pos}</span></div>
+                  <div style={{fontSize:10,color:C.muted}}>{p.club}</div>
+                </div>
+                <div style={{display:"flex",gap:3}}>{p.form.map((f,fi)=>(<div key={fi} style={{width:17,height:17,borderRadius:3,background:f>=12?C.gold+"30":C.sage+"20",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:8,fontWeight:600,color:f>=12?C.amber:C.muted}}>{f}</span></div>))}</div>
+                <div style={{textAlign:"right"}}><div className="cd" style={{fontSize:15,fontWeight:800,color:C.amber}}>{p.pts}</div><div style={{fontSize:11,color:ok?C.gold:C.terracotta,fontWeight:600}}>£{p.price}m</div></div>
+                {ok&&<div style={{width:24,height:24,borderRadius:"50%",background:selected?.id===p.id?C.gold:C.sage+"40",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:selected?.id===p.id?C.dark:C.sage,flexShrink:0}}>{selected?.id===p.id?"✓":"+"}</div>}
+              </div>
+            );})}
+            {selected&&(<div style={{position:"sticky",bottom:16,marginTop:12,background:C.gold,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div><div style={{fontSize:10,color:C.dark+"80",fontWeight:600}}>ADDING</div><div className="cd" style={{fontSize:16,fontWeight:800,color:C.dark}}>{selected.flag} {selected.name}</div></div>
+              <button className="nb cb" onClick={confirmTransfer} style={{background:C.dark,color:C.gold,borderRadius:8,padding:"8px 16px",fontWeight:700,fontSize:12,cursor:"pointer"}}>Confirm · £{selected.price}m</button>
+            </div>)}
+          </div>
+        )}
+
+        {tab==="league"&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div><div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>LIVE LEADERBOARD</div><div style={{fontSize:10,color:C.muted}}>All managers · live from database</div></div>
+              <button className="nb cb" onClick={fetchLeague} style={{fontSize:11,color:C.muted,border:`1px solid ${C.gold}20`,borderRadius:6,padding:"5px 10px"}}>{leagueLoading?"…":"↻ Refresh"}</button>
+            </div>
+            {leagueData.length>0&&(
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14,alignItems:"end"}}>
+                {[leagueData[1],leagueData[0],leagueData[2]].filter(Boolean).map((m,i)=>{
+                  const h=[110,130,95][i];const r=i===0?2:i===1?1:3;const rc=r===1?C.gold:r===2?"#C0C0C0":"#CD7F32";
+                  return(<div key={m.username} style={{textAlign:"center"}}>
+                    <div style={{fontSize:20,marginBottom:2}}>{m.badge}</div>
+                    <div style={{fontSize:11,fontWeight:600,marginBottom:2,color:m.username===teamRow.username?C.gold:C.cream}}>{m.team_name}</div>
+                    <div style={{background:rc+"20",border:`1px solid ${rc}40`,borderRadius:"8px 8px 0 0",height:h,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",padding:8}}>
+                      <div className="cd" style={{fontSize:24,fontWeight:800,color:rc}}>{r}</div>
+                      <div className="cd" style={{fontSize:14,fontWeight:700,color:C.amber}}>{m.total_pts.toLocaleString()}</div>
+                      <div style={{fontSize:10,color:C.muted}}>pts</div>
+                    </div>
+                  </div>);
+                })}
+              </div>
+            )}
+            <div style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:12,overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"28px 1fr 54px 42px",padding:"7px 12px",borderBottom:`1px solid ${C.gold}20`}}>
+                {["#","Team","Total","GW"].map(h=>(<div key={h} style={{fontSize:9,color:C.muted,fontWeight:600,letterSpacing:1,textTransform:"uppercase",textAlign:h!=="Team"?"center":"left"}}>{h}</div>))}
+              </div>
+              {leagueLoading&&<div style={{padding:"20px",textAlign:"center",color:C.muted,fontSize:13}}>Loading…</div>}
+              {!leagueLoading&&leagueData.length===0&&<div style={{padding:"20px",textAlign:"center",color:C.muted,fontSize:13}}>No managers yet — share the link!</div>}
+              {leagueData.map((m,i)=>(<div key={m.username} className="sr" style={{display:"grid",gridTemplateColumns:"28px 1fr 54px 42px",padding:"9px 12px",alignItems:"center",borderLeft:m.username===teamRow.username?`3px solid ${C.gold}`:"3px solid transparent"}}>
+                <div className="cd" style={{fontSize:14,fontWeight:800,color:i<3?C.gold:C.muted,textAlign:"center"}}>{i+1}</div>
+                <div><div style={{fontSize:12,fontWeight:m.username===teamRow.username?700:500,color:m.username===teamRow.username?C.gold:C.cream}}>{m.badge} {m.team_name}</div><div style={{fontSize:9,color:C.muted}}>{m.username}</div></div>
+                <div className="cd" style={{fontSize:14,fontWeight:700,color:C.amber,textAlign:"center"}}>{m.total_pts.toLocaleString()}</div>
+                <div style={{fontSize:11,color:C.muted,textAlign:"center"}}>{m.gw_pts}</div>
+              </div>))}
+            </div>
+          </div>
+        )}
+
+        {tab==="fixtures"&&(
+          <div>
+            <div style={{marginBottom:14}}><div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>FIXTURES</div><div style={{fontSize:10,color:C.muted}}>Gameweek 28 · Apr 12–14, 2026</div></div>
+            {FIXTURES.map((f,i)=>{
+              const myPl=squadList.filter(p=>p.nation===f.homeCode||p.nation===f.awayCode);
+              return(<div key={i} className="ch" style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div style={{fontSize:9,color:C.muted,letterSpacing:1}}>GW28 · {f.date}</div><div style={{fontSize:10,color:C.amber,fontWeight:600}}>{f.time} CAT</div></div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{flex:1,textAlign:"center"}}><div style={{fontSize:28}}>{f.homeFlag}</div><div className="cd" style={{fontSize:12,fontWeight:700,marginTop:3}}>{f.home.toUpperCase()}</div></div>
+                  <div style={{textAlign:"center",padding:"5px 10px",background:C.sage+"30",borderRadius:8}}><div className="cd" style={{fontSize:16,fontWeight:800,color:C.gold}}>VS</div></div>
+                  <div style={{flex:1,textAlign:"center"}}><div style={{fontSize:28}}>{f.awayFlag}</div><div className="cd" style={{fontSize:12,fontWeight:700,marginTop:3}}>{f.away.toUpperCase()}</div></div>
+                </div>
+                {myPl.length>0&&(<div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.gold}15`}}>
+                  <div style={{fontSize:9,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Your players</div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {myPl.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:4,background:posColors[p.pos].bg+"50",borderRadius:6,padding:"3px 8px"}}><span style={{fontSize:12}}>{p.flag}</span><span style={{fontSize:11,color:posColors[p.pos].text,fontWeight:600}}>{p.name.split(" ").pop()}</span></div>))}
+                  </div>
+                </div>)}
+              </div>);
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<Root/>);
+</script>
+</body>
+</html>
