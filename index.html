@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <title>CAF Fantasy Football 2025/26</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
@@ -12,313 +12,316 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body,#root{min-height:100%;background:#0B2A1A;}
+html,body,#root{min-height:100%;background:#080C14;background-image:radial-gradient(ellipse at 20% 50%,rgba(255,107,53,0.04) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(6,214,160,0.04) 0%,transparent 60%);}
 body{overflow-x:hidden;}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:rgba(255,255,255,0.04);}
-::-webkit-scrollbar-thumb{background:#D4A01760;border-radius:2px;}
+::-webkit-scrollbar-thumb{background:#FF6B3560;border-radius:2px;}
 </style>
 </head>
 <body>
 <div id="root"></div>
-<div id="err" style="display:none;position:fixed;inset:0;background:#0A1F12;color:#E07272;font-family:monospace;font-size:13px;padding:24px;z-index:9999;white-space:pre-wrap;overflow:auto;"></div>
-<script>window.onerror=function(m,s,l,c,e){var d=document.getElementById('err');d.style.display='block';d.textContent='ERROR:\n'+m+'\nLine '+l+'\n\n'+(e&&e.stack?e.stack:'');};</script>
+<div id="err" style="display:none;position:fixed;inset:0;background:#080C14;color:#FF6B6B;font-family:monospace;font-size:13px;padding:24px;z-index:9999;white-space:pre-wrap;overflow:auto;"></div>
+<script>window.onerror=function(m,s,l,c,e){var d=document.getElementById('err');d.style.display='block';d.textContent='ERROR:\n'+m+'\nLine:'+l+'\n\n'+(e&&e.stack||'');};</script>
 <script type="text/babel">
 
+/* ─── SUPABASE ─── */
 const SUPABASE_URL  = "https://upafmcukvnswolptyghw.supabase.co";
 const SUPABASE_ANON = "sb_publishable_g9AkeT5a_J4-czVvVibGgQ_1jXsmZ4J";
-
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 /* ─── THEME ─── */
-const C={forest:"#0B2A1A",gold:"#D4A017",amber:"#E8B84B",cream:"#F5EDD6",
-  sage:"#2D6A4F",muted:"#8A7D65",dark:"#0A1F12",pitch:"#1B6B34",
-  red:"#C0522A",blue:"#1A3A5C",purple:"#3B1F5C"};
-
+const C={
+  forest:"#080C14",gold:"#FF6B35",amber:"#FFD166",cream:"#F0F4FF",
+  sage:"#06D6A0",muted:"#6B7A99",dark:"#0D1220",pitch:"#0A5C2E",red:"#EF233C",
+};
 const POS={
-  GK:{bg:"#7A5000",text:"#FFD95C",limit:2},
-  DEF:{bg:"#1A4D2E",text:"#72E0A0",limit:5},
-  MID:{bg:"#1A3A5C",text:"#72C4E0",limit:5},
-  FWD:{bg:"#5C1A1A",text:"#E07272",limit:3},
+  GK:{bg:"#1A1035",text:"#C77DFF",limit:2},
+  DEF:{bg:"#002D62",text:"#4FC3F7",limit:5},
+  MID:{bg:"#004D40",text:"#69F0AE",limit:5},
+  FWD:{bg:"#4A0000",text:"#FF6B6B",limit:3},
 };
 
 /* ─── PLAYER DATA ─── */
-const PLAYERS = [
-  /* GK */
-  {id:1, name:"A. Onana",     nation:"CMR",club:"Man Utd",   pts:82, price:5.5, form:3.2,sel:12.4,pos:"GK",flag:"🇨🇲",
-    stats:{goals:0,assists:0,cs:4,saves:28,yc:1,rc:0,bonus:4,mins:810}},
-  {id:2, name:"R. Sanchez",   nation:"MAR",club:"Chelsea",   pts:74, price:5.0, form:2.8,sel:7.1, pos:"GK",flag:"🇲🇦",
-    stats:{goals:0,assists:0,cs:3,saves:24,yc:0,rc:0,bonus:2,mins:720}},
-  {id:17,name:"Y. Bounou",    nation:"MAR",club:"Al-Hilal",  pts:91, price:5.5, form:4.2,sel:18.6,pos:"GK",flag:"🇲🇦",
-    stats:{goals:0,assists:0,cs:6,saves:31,yc:0,rc:0,bonus:6,mins:900}},
-  /* DEF */
-  {id:3, name:"A. Hakimi",    nation:"MAR",club:"PSG",       pts:118,price:7.5, form:6.8,sel:42.1,pos:"DEF",flag:"🇲🇦",
-    stats:{goals:3,assists:7,cs:4,saves:0,yc:2,rc:0,bonus:14,mins:900}},
-  {id:4, name:"N. Nkoulou",   nation:"CMR",club:"Torino",    pts:95, price:5.5, form:4.1,sel:14.2,pos:"DEF",flag:"🇨🇲",
-    stats:{goals:1,assists:2,cs:5,saves:0,yc:3,rc:0,bonus:8,mins:855}},
-  {id:5, name:"K. Koulibaly", nation:"SEN",club:"Al-Hilal",  pts:102,price:6.0, form:5.2,sel:22.8,pos:"DEF",flag:"🇸🇳",
-    stats:{goals:2,assists:1,cs:6,saves:0,yc:1,rc:0,bonus:10,mins:900}},
-  {id:6, name:"T. Mvogo",     nation:"CMR",club:"Lorient",   pts:88, price:5.0, form:3.8,sel:9.4, pos:"DEF",flag:"🇨🇲",
-    stats:{goals:1,assists:3,cs:4,saves:0,yc:2,rc:0,bonus:6,mins:810}},
-  {id:7, name:"S. Dossevi",   nation:"TOG",club:"Nantes",    pts:79, price:4.5, form:3.1,sel:6.2, pos:"DEF",flag:"🇹🇬",
-    stats:{goals:0,assists:2,cs:3,saves:0,yc:1,rc:0,bonus:4,mins:765}},
-  {id:18,name:"A. Bensebaini",nation:"ALG",club:"Dortmund",  pts:107,price:6.0, form:5.8,sel:28.3,pos:"DEF",flag:"🇩🇿",
-    stats:{goals:4,assists:2,cs:5,saves:0,yc:2,rc:0,bonus:12,mins:900}},
-  {id:19,name:"O. Aina",      nation:"NGR",club:"Nottm F.",  pts:96, price:5.5, form:4.4,sel:16.7,pos:"DEF",flag:"🇳🇬",
-    stats:{goals:1,assists:4,cs:4,saves:0,yc:1,rc:0,bonus:8,mins:855}},
-  /* MID */
-  {id:8, name:"R. Mahrez",    nation:"ALG",club:"Al-Ahli",   pts:142,price:9.0, form:8.4,sel:58.2,pos:"MID",flag:"🇩🇿",
-    stats:{goals:8,assists:9,cs:0,saves:0,yc:1,rc:0,bonus:18,mins:870}},
-  {id:9, name:"H. Ziyech",    nation:"MAR",club:"Galatasaray",pts:128,price:8.5,form:7.2,sel:44.6,pos:"MID",flag:"🇲🇦",
-    stats:{goals:6,assists:10,cs:0,saves:0,yc:2,rc:0,bonus:14,mins:855}},
-  {id:10,name:"W. Ndidi",     nation:"NGR",club:"Leicester",  pts:115,price:7.0, form:6.1,sel:31.4,pos:"MID",flag:"🇳🇬",
-    stats:{goals:3,assists:6,cs:1,saves:0,yc:4,rc:0,bonus:10,mins:900}},
-  {id:11,name:"I. Sarr",      nation:"SEN",club:"Watford",   pts:98, price:6.5, form:5.2,sel:19.8,pos:"MID",flag:"🇸🇳",
-    stats:{goals:5,assists:4,cs:0,saves:0,yc:1,rc:0,bonus:8,mins:810}},
-  {id:12,name:"S. Amrabat",   nation:"MAR",club:"Man Utd",   pts:107,price:7.0, form:5.8,sel:26.1,pos:"MID",flag:"🇲🇦",
-    stats:{goals:2,assists:7,cs:1,saves:0,yc:3,rc:0,bonus:10,mins:900}},
-  {id:20,name:"T. Partey",    nation:"GHA",club:"Arsenal",   pts:119,price:7.5, form:6.6,sel:35.2,pos:"MID",flag:"🇬🇭",
-    stats:{goals:4,assists:8,cs:1,saves:0,yc:2,rc:0,bonus:12,mins:870}},
-  {id:21,name:"M. Sissoko",   nation:"MLI",club:"Toulouse",  pts:88, price:6.0, form:4.2,sel:11.3,pos:"MID",flag:"🇲🇱",
-    stats:{goals:3,assists:5,cs:0,saves:0,yc:3,rc:0,bonus:6,mins:810}},
-  /* FWD */
-  {id:13,name:"V. Osimhen",   nation:"NGR",club:"Galatasaray",pts:168,price:12.0,form:10.2,sel:72.4,pos:"FWD",flag:"🇳🇬",
-    stats:{goals:14,assists:5,cs:0,saves:0,yc:2,rc:0,bonus:22,mins:855}},
-  {id:14,name:"S. Mane",      nation:"SEN",club:"Al-Nassr",  pts:155,price:11.5,form:9.4,sel:64.1,pos:"FWD",flag:"🇸🇳",
-    stats:{goals:12,assists:7,cs:0,saves:0,yc:1,rc:0,bonus:18,mins:840}},
-  {id:15,name:"M. Salah",     nation:"EGY",club:"Liverpool", pts:188,price:13.5,form:12.1,sel:84.3,pos:"FWD",flag:"🇪🇬",
-    stats:{goals:18,assists:11,cs:0,saves:0,yc:0,rc:0,bonus:26,mins:900}},
-  {id:16,name:"A. Delort",    nation:"ALG",club:"Nice",      pts:112,price:8.0, form:6.4,sel:28.6,pos:"FWD",flag:"🇩🇿",
-    stats:{goals:9,assists:4,cs:0,saves:0,yc:2,rc:0,bonus:10,mins:810}},
-  {id:22,name:"C. Ekambi",    nation:"CMR",club:"Lyon",      pts:98, price:7.5, form:5.2,sel:18.4,pos:"FWD",flag:"🇨🇲",
-    stats:{goals:7,assists:5,cs:0,saves:0,yc:1,rc:0,bonus:8,mins:795}},
-  {id:23,name:"A. Traore",    nation:"MLI",club:"Fulham",    pts:87, price:6.5, form:4.8,sel:12.1,pos:"FWD",flag:"🇲🇱",
-    stats:{goals:6,assists:3,cs:0,saves:0,yc:2,rc:0,bonus:6,mins:765}},
+const PLAYERS=[
+  {id:1, name:"A. Onana",     nation:"CMR",club:"Man Utd",   pts:82, price:5.5, form:3.2,sel:12.4,pos:"GK", flag:"🇨🇲",stats:{goals:0,assists:0,cs:4,saves:28,yc:1,rc:0,bonus:4,mins:810}},
+  {id:2, name:"R. Sanchez",   nation:"MAR",club:"Chelsea",   pts:74, price:5.0, form:2.8,sel:7.1, pos:"GK", flag:"🇲🇦",stats:{goals:0,assists:0,cs:3,saves:24,yc:0,rc:0,bonus:2,mins:720}},
+  {id:17,name:"Y. Bounou",    nation:"MAR",club:"Al-Hilal",  pts:91, price:5.5, form:4.2,sel:18.6,pos:"GK", flag:"🇲🇦",stats:{goals:0,assists:0,cs:6,saves:31,yc:0,rc:0,bonus:6,mins:900}},
+  {id:3, name:"A. Hakimi",    nation:"MAR",club:"PSG",       pts:118,price:7.5, form:6.8,sel:42.1,pos:"DEF",flag:"🇲🇦",stats:{goals:3,assists:7,cs:4,saves:0,yc:2,rc:0,bonus:14,mins:900}},
+  {id:4, name:"N. Nkoulou",   nation:"CMR",club:"Torino",    pts:95, price:5.5, form:4.1,sel:14.2,pos:"DEF",flag:"🇨🇲",stats:{goals:1,assists:2,cs:5,saves:0,yc:3,rc:0,bonus:8,mins:855}},
+  {id:5, name:"K. Koulibaly", nation:"SEN",club:"Al-Hilal",  pts:102,price:6.0, form:5.2,sel:22.8,pos:"DEF",flag:"🇸🇳",stats:{goals:2,assists:1,cs:6,saves:0,yc:1,rc:0,bonus:10,mins:900}},
+  {id:6, name:"T. Mvogo",     nation:"CMR",club:"Lorient",   pts:88, price:5.0, form:3.8,sel:9.4, pos:"DEF",flag:"🇨🇲",stats:{goals:1,assists:3,cs:4,saves:0,yc:2,rc:0,bonus:6,mins:810}},
+  {id:7, name:"S. Dossevi",   nation:"TOG",club:"Nantes",    pts:79, price:4.5, form:3.1,sel:6.2, pos:"DEF",flag:"🇹🇬",stats:{goals:0,assists:2,cs:3,saves:0,yc:1,rc:0,bonus:4,mins:765}},
+  {id:18,name:"A. Bensebaini",nation:"ALG",club:"Dortmund",  pts:107,price:6.0, form:5.8,sel:28.3,pos:"DEF",flag:"🇩🇿",stats:{goals:4,assists:2,cs:5,saves:0,yc:2,rc:0,bonus:12,mins:900}},
+  {id:19,name:"O. Aina",      nation:"NGR",club:"Nottm F.",  pts:96, price:5.5, form:4.4,sel:16.7,pos:"DEF",flag:"🇳🇬",stats:{goals:1,assists:4,cs:4,saves:0,yc:1,rc:0,bonus:8,mins:855}},
+  {id:8, name:"R. Mahrez",    nation:"ALG",club:"Al-Ahli",   pts:142,price:9.0, form:8.4,sel:58.2,pos:"MID",flag:"🇩🇿",stats:{goals:8,assists:9,cs:0,saves:0,yc:1,rc:0,bonus:18,mins:870}},
+  {id:9, name:"H. Ziyech",    nation:"MAR",club:"Galatasaray",pts:128,price:8.5,form:7.2,sel:44.6,pos:"MID",flag:"🇲🇦",stats:{goals:6,assists:10,cs:0,saves:0,yc:2,rc:0,bonus:14,mins:855}},
+  {id:10,name:"W. Ndidi",     nation:"NGR",club:"Leicester",  pts:115,price:7.0, form:6.1,sel:31.4,pos:"MID",flag:"🇳🇬",stats:{goals:3,assists:6,cs:1,saves:0,yc:4,rc:0,bonus:10,mins:900}},
+  {id:11,name:"I. Sarr",      nation:"SEN",club:"Watford",   pts:98, price:6.5, form:5.2,sel:19.8,pos:"MID",flag:"🇸🇳",stats:{goals:5,assists:4,cs:0,saves:0,yc:1,rc:0,bonus:8,mins:810}},
+  {id:12,name:"S. Amrabat",   nation:"MAR",club:"Man Utd",   pts:107,price:7.0, form:5.8,sel:26.1,pos:"MID",flag:"🇲🇦",stats:{goals:2,assists:7,cs:1,saves:0,yc:3,rc:0,bonus:10,mins:900}},
+  {id:20,name:"T. Partey",    nation:"GHA",club:"Arsenal",   pts:119,price:7.5, form:6.6,sel:35.2,pos:"MID",flag:"🇬🇭",stats:{goals:4,assists:8,cs:1,saves:0,yc:2,rc:0,bonus:12,mins:870}},
+  {id:21,name:"M. Sissoko",   nation:"MLI",club:"Toulouse",  pts:88, price:6.0, form:4.2,sel:11.3,pos:"MID",flag:"🇲🇱",stats:{goals:3,assists:5,cs:0,saves:0,yc:3,rc:0,bonus:6,mins:810}},
+  {id:13,name:"V. Osimhen",   nation:"NGR",club:"Galatasaray",pts:168,price:12.0,form:10.2,sel:72.4,pos:"FWD",flag:"🇳🇬",stats:{goals:14,assists:5,cs:0,saves:0,yc:2,rc:0,bonus:22,mins:855}},
+  {id:14,name:"S. Mane",      nation:"SEN",club:"Al-Nassr",  pts:155,price:11.5,form:9.4,sel:64.1,pos:"FWD",flag:"🇸🇳",stats:{goals:12,assists:7,cs:0,saves:0,yc:1,rc:0,bonus:18,mins:840}},
+  {id:15,name:"M. Salah",     nation:"EGY",club:"Liverpool", pts:188,price:13.5,form:12.1,sel:84.3,pos:"FWD",flag:"🇪🇬",stats:{goals:18,assists:11,cs:0,saves:0,yc:0,rc:0,bonus:26,mins:900}},
+  {id:16,name:"A. Delort",    nation:"ALG",club:"Nice",      pts:112,price:8.0, form:6.4,sel:28.6,pos:"FWD",flag:"🇩🇿",stats:{goals:9,assists:4,cs:0,saves:0,yc:2,rc:0,bonus:10,mins:810}},
+  {id:22,name:"C. Ekambi",    nation:"CMR",club:"Lyon",      pts:98, price:7.5, form:5.2,sel:18.4,pos:"FWD",flag:"🇨🇲",stats:{goals:7,assists:5,cs:0,saves:0,yc:1,rc:0,bonus:8,mins:795}},
+  {id:23,name:"A. Traore",    nation:"MLI",club:"Fulham",    pts:87, price:6.5, form:4.8,sel:12.1,pos:"FWD",flag:"🇲🇱",stats:{goals:6,assists:3,cs:0,saves:0,yc:2,rc:0,bonus:6,mins:765}},
 ];
 
 const byId  = id  => PLAYERS.find(p=>p.id===id);
 const byIds = ids => (ids||[]).map(byId).filter(Boolean);
 
-const FORMATIONS = ["3-4-3","3-5-2","4-3-3","4-4-2","4-5-1","5-2-3","5-3-2","5-4-1"];
-
-const FORMATION_DEF = {
-  "3-4-3":{def:3,mid:4,fwd:3},"3-5-2":{def:3,mid:5,fwd:2},
-  "4-3-3":{def:4,mid:3,fwd:3},"4-4-2":{def:4,mid:4,fwd:2},
-  "4-5-1":{def:4,mid:5,fwd:1},"5-2-3":{def:5,mid:2,fwd:3},
-  "5-3-2":{def:5,mid:3,fwd:2},"5-4-1":{def:5,mid:4,fwd:1},
-};
-
-const CHIPS = [
-  {id:"wildcard",    label:"Wildcard",       desc:"Unlimited free transfers this GW",  icon:"🃏"},
-  {id:"free_hit",    label:"Free Hit",       desc:"Temporary unlimited transfers",     icon:"🎯"},
-  {id:"triple_cap",  label:"Triple Captain", desc:"Captain scores 3x points",         icon:"3️⃣"},
-  {id:"bench_boost", label:"Bench Boost",    desc:"Bench players' points count",      icon:"🚀"},
+const FORMATIONS=["3-4-3","3-5-2","4-3-3","4-4-2","4-5-1","5-2-3","5-3-2","5-4-1"];
+const FORMATION_DEF={"3-4-3":{def:3,mid:4,fwd:3},"3-5-2":{def:3,mid:5,fwd:2},"4-3-3":{def:4,mid:3,fwd:3},"4-4-2":{def:4,mid:4,fwd:2},"4-5-1":{def:4,mid:5,fwd:1},"5-2-3":{def:5,mid:2,fwd:3},"5-3-2":{def:5,mid:3,fwd:2},"5-4-1":{def:5,mid:4,fwd:1}};
+const CHIPS=[{id:"wildcard",label:"Wildcard",desc:"Unlimited free transfers",icon:"🃏"},{id:"free_hit",label:"Free Hit",desc:"Temporary unlimited squad",icon:"🎯"},{id:"triple_cap",label:"Triple Captain",desc:"Captain scores 3× points",icon:"3️⃣"},{id:"bench_boost",label:"Bench Boost",desc:"Bench points count this GW",icon:"🚀"}];
+const FIXTURES=[
+  {home:"Egypt",away:"Nigeria",hf:"🇪🇬",af:"🇳🇬",date:"Apr 12",time:"20:00",hc:"EGY",ac:"NGR",hd:3,ad:4},
+  {home:"Morocco",away:"Senegal",hf:"🇲🇦",af:"🇸🇳",date:"Apr 12",time:"17:00",hc:"MAR",ac:"SEN",hd:4,ad:4},
+  {home:"Algeria",away:"Cameroon",hf:"🇩🇿",af:"🇨🇲",date:"Apr 13",time:"20:00",hc:"ALG",ac:"CMR",hd:2,ad:3},
+  {home:"Ghana",away:"Ivory Coast",hf:"🇬🇭",af:"🇨🇮",date:"Apr 13",time:"17:00",hc:"GHA",ac:"CIV",hd:3,ad:3},
+  {home:"Tunisia",away:"Mali",hf:"🇹🇳",af:"🇲🇱",date:"Apr 14",time:"20:00",hc:"TUN",ac:"MLI",hd:2,ad:3},
+  {home:"DR Congo",away:"South Africa",hf:"🇨🇩",af:"🇿🇦",date:"Apr 14",time:"17:00",hc:"COD",ac:"RSA",hd:3,ad:2},
 ];
-
-const FIXTURES = [
-  {home:"Egypt",    away:"Nigeria",     hf:"🇪🇬",af:"🇳🇬",date:"Apr 12",time:"20:00",hc:"EGY",ac:"NGR",hd:3,ad:4},
-  {home:"Morocco",  away:"Senegal",     hf:"🇲🇦",af:"🇸🇳",date:"Apr 12",time:"17:00",hc:"MAR",ac:"SEN",hd:4,ad:4},
-  {home:"Algeria",  away:"Cameroon",    hf:"🇩🇿",af:"🇨🇲",date:"Apr 13",time:"20:00",hc:"ALG",ac:"CMR",hd:2,ad:3},
-  {home:"Ghana",    away:"Ivory Coast", hf:"🇬🇭",af:"🇨🇮",date:"Apr 13",time:"17:00",hc:"GHA",ac:"CIV",hd:3,ad:3},
-  {home:"Tunisia",  away:"Mali",        hf:"🇹🇳",af:"🇲🇱",date:"Apr 14",time:"20:00",hc:"TUN",ac:"MLI",hd:2,ad:3},
-  {home:"DR Congo", away:"South Africa",hf:"🇨🇩",af:"🇿🇦",date:"Apr 14",time:"17:00",hc:"COD",ac:"RSA",hd:3,ad:2},
-];
-
-const NATION_FLAG = {EGY:"🇪🇬",NGR:"🇳🇬",MAR:"🇲🇦",SEN:"🇸🇳",ALG:"🇩🇿",CMR:"🇨🇲",GHA:"🇬🇭",CIV:"🇨🇮",TUN:"🇹🇳",MLI:"🇲🇱",COD:"🇨🇩",RSA:"🇿🇦"};
-
-const DEFAULT_ROW = {
-  team_name:"My Team",badge:"🦁",budget:14.5,free_transfers:1,transfer_hits:0,
-  gk_ids:[1,17],def_ids:[3,5,18,19,6],mid_ids:[8,9,10,12,20],fwd_ids:[13,14,15],
-  starting_ids:[17,3,5,18,19,8,9,10,13,14,15],bench_ids:[1,6,12,20],
-  captain_id:15,vice_captain_id:13,formation:"4-3-3",
-  chips_used:[],active_chip:null,gw_pts:0,total_pts:0,
-};
-
 const BADGES=["🦁","🦅","🐺","🦊","⭐","🔥","🏆","⚡","🛡️","🎯"];
+const DEFAULT_ROW={team_name:"My Team",badge:"🦁",budget:14.5,free_transfers:1,transfer_hits:0,gk_ids:[1,17],def_ids:[3,5,18,19,6],mid_ids:[8,9,10,12,20],fwd_ids:[13,14,15],starting_ids:[17,3,5,18,19,8,9,10,13,14,15],bench_ids:[1,6,12,20],captain_id:15,vice_captain_id:13,formation:"4-3-3",chips_used:[],active_chip:null,gw_pts:0,total_pts:0};
 
 /* ─── POINTS CALCULATOR ─── */
-function calcPoints(p, isCap, isVice, chipTriple, starting) {
-  if (!starting) return 0;
-  const s = p.stats;
-  let pts = s.mins >= 60 ? 2 : s.mins > 0 ? 1 : 0;
-  if (p.pos==="GK"||p.pos==="DEF") { pts += s.goals*6; pts += s.cs*4; pts += Math.floor(s.saves/3); }
-  else if (p.pos==="MID") { pts += s.goals*5; pts += s.cs*1; }
-  else { pts += s.goals*4; }
-  pts += s.assists*3;
-  pts -= s.yc*1; pts -= s.rc*3;
-  pts += s.bonus;
-  const mult = isCap ? (chipTriple?3:2) : isVice ? 2 : 1;
-  return pts * mult;
+function calcPts(p,isCap,isVice,triple,onPitch){
+  if(!onPitch)return 0;
+  const s=p.stats;
+  let pts=s.mins>=60?2:s.mins>0?1:0;
+  if(p.pos==="GK"||p.pos==="DEF"){pts+=s.goals*6;pts+=s.cs*4;pts+=Math.floor(s.saves/3);}
+  else if(p.pos==="MID"){pts+=s.goals*5;pts+=s.cs;}
+  else{pts+=s.goals*4;}
+  pts+=s.assists*3;pts-=s.yc;pts-=s.rc*3;pts+=s.bonus;
+  return pts*(isCap?(triple?3:2):isVice?2:1);
 }
 
-/* ─── STYLES ─── */
+/* ─── CSS ─── */
 const css=`
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap');
 .cd{font-family:'Barlow Condensed',sans-serif;}
 .cb{font-family:'Barlow',sans-serif;}
+.cs{font-family:'Syne',sans-serif;}
 .nb{background:none;border:none;cursor:pointer;}
 .ch{cursor:pointer;transition:transform 0.12s,filter 0.12s;}
-.ch:hover{transform:translateY(-2px);filter:brightness(1.1);}
-.ta{border-bottom:3px solid #D4A017!important;color:#D4A017!important;}
-.fi{animation:fi 0.3s ease;}
-@keyframes fi{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.ch:hover{transform:translateY(-2px);filter:brightness(1.15);}
+.ta{border-bottom:3px solid #FF6B35!important;color:#FF6B35!important;}
+.fi{animation:fi 0.35s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 .pl{animation:pl 2s infinite;}
 @keyframes pl{0%,100%{opacity:1;}50%{opacity:0.5;}}
-.sr:nth-child(even){background:rgba(255,255,255,0.025);}
-.geo{background-image:repeating-linear-gradient(45deg,rgba(212,160,23,0.04) 0,rgba(212,160,23,0.04) 1px,transparent 1px,transparent 8px),repeating-linear-gradient(-45deg,rgba(212,160,23,0.04) 0,rgba(212,160,23,0.04) 1px,transparent 1px,transparent 8px);}
-.inp{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(212,160,23,0.25);border-radius:8px;padding:10px 13px;color:#F5EDD6;font-size:14px;font-family:'Barlow',sans-serif;outline:none;}
-.inp:focus{border-color:#D4A017;}
-.inp::placeholder{color:#8A7D65;}
-.btn-gold{background:#D4A017;color:#0A1F12;border:none;border-radius:8px;padding:11px 20px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:opacity 0.14s;width:100%;}
-.btn-gold:hover{opacity:0.88;}
-.btn-gold:disabled{opacity:0.4;cursor:not-allowed;}
+.sr:nth-child(even){background:rgba(255,255,255,0.02);}
+.geo{background-image:repeating-linear-gradient(45deg,rgba(255,107,53,0.04) 0,rgba(255,107,53,0.04) 1px,transparent 1px,transparent 12px),repeating-linear-gradient(-45deg,rgba(255,107,53,0.04) 0,rgba(255,107,53,0.04) 1px,transparent 1px,transparent 12px);}
+.card{background:#0D1220;border:1px solid rgba(255,255,255,0.07);border-radius:12px;}
+.card-accent{background:#0D1220;border:1px solid rgba(255,107,53,0.25);border-radius:12px;}
+.glow-orange{box-shadow:0 0 20px rgba(255,107,53,0.15);}
+.glow-teal{box-shadow:0 0 20px rgba(6,214,160,0.1);}
+.inp{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;color:#F0F4FF;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border 0.2s,background 0.2s;}
+.inp:focus{border-color:#FF6B35;background:rgba(255,107,53,0.05);}
+.inp::placeholder{color:#6B7A99;}
+.btn-gold{background:#FF6B35;color:#080C14;border:none;border-radius:10px;padding:13px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all 0.14s;width:100%;}
+.btn-gold:hover{background:#FF8555;transform:translateY(-1px);}
+.btn-gold:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.btn-sec{background:rgba(255,255,255,0.05);color:#F0F4FF;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;font-family:'Barlow',sans-serif;font-size:14px;cursor:pointer;width:100%;transition:all 0.15s;}
+.btn-sec:hover{background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.2);}
 .sdot{width:6px;height:6px;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:4px;transition:background 0.3s;}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
-.modal{background:#0F2E1A;border:1px solid rgba(212,160,23,0.2);border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;padding:20px;}
-select.inp option{background:#0A1F12;color:#F5EDD6;}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:#06D6A0;display:inline-block;animation:pulsedot 2s infinite;}
+@keyframes pulsedot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.75);}}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.modal{background:#0D1220;border:1px solid rgba(255,107,53,0.2);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:22px;}
+select.inp option{background:#0D1220;color:#F0F4FF;}
+.err-box{font-size:12px;color:#FF6B6B;padding:9px 13px;background:rgba(239,35,60,0.12);border-radius:8px;border:1px solid rgba(239,35,60,0.3);}
+.ok-box{font-size:12px;color:#69F0AE;padding:9px 13px;background:rgba(6,214,160,0.1);border-radius:8px;border:1px solid rgba(6,214,160,0.3);}
+.tab-bar{display:flex;border-top:1px solid rgba(255,255,255,0.06);}
+.tab-btn{flex:1;padding:9px 2px;font-size:10px;font-weight:600;color:#6B7A99;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:'Barlow',sans-serif;transition:color 0.15s;}
+.live-badge{background:rgba(6,214,160,0.15);color:#06D6A0;font-size:9px;padding:2px 7px;border-radius:10px;display:inline-flex;align-items:center;gap:3px;font-weight:600;border:1px solid rgba(6,214,160,0.3);}
+.pos-pill{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;}
 `;
 
 function SaveDot({s}){
-  const col=s==="saving"?C.amber:s==="saved"?C.sage:s==="error"?"#E07272":"transparent";
+  const col=s==="saving"?"#FFD166":s==="saved"?"#06D6A0":s==="error"?"#EF233C":"transparent";
   return <span className="sdot" style={{background:col}}/>;
 }
 
-function DiffBadge({d}){
-  const cols=["","#2E7D32","#66BB6A","#FFA726","#EF5350","#B71C1C"];
-  return <span style={{background:cols[d]||cols[3],color:"white",fontSize:9,fontWeight:800,padding:"1px 5px",borderRadius:3}}>{d}</span>;
-}
-
 /* ════════════════════════════════════
-   LOGIN
+   AUTH SCREEN  (email + password)
 ════════════════════════════════════ */
-function LoginScreen({onLogin}){
-  const [u,setU]=useState(""),[tn,setTn]=useState(""),
-    [badge,setBadge]=useState("🦁"),[loading,setLoading]=useState(false),
-    [err,setErr]=useState(""),[isNew,setIsNew]=useState(false),[checked,setChecked]=useState(false);
+function AuthScreen({onAuth}){
+  const [mode,setMode]=useState("login"); // login | signup
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [teamName,setTeamName]=useState("");
+  const [username,setUsername]=useState("");
+  const [badge,setBadge]=useState("🦁");
+  const [loading,setLoading]=useState(false);
+  const [msg,setMsg]=useState(null); // {type:"err"|"ok", text}
 
-  async function check(){
-    const uv=u.trim().toLowerCase();if(!uv)return;
-    const {data}=await sb.from("teams").select("id,team_name").eq("username",uv).maybeSingle();
-    setIsNew(!data);if(data)setTn(data.team_name);setChecked(true);
-  }
-  async function submit(){
-    const uv=u.trim().toLowerCase();if(!uv)return setErr("Enter a username");
-    setLoading(true);setErr("");
-    try{
-      if(isNew){
-        const {data,error:e}=await sb.from("teams").insert({...DEFAULT_ROW,username:uv,team_name:tn.trim()||(uv+"'s XI"),badge}).select().single();
-        if(e)throw e;localStorage.setItem("caf_u",uv);onLogin(data);
-      }else{
-        const {data,error:e}=await sb.from("teams").select("*").eq("username",uv).single();
-        if(e)throw e;localStorage.setItem("caf_u",uv);onLogin(data);
-      }
-    }catch(e){setErr(e.message||"Error");}
+  async function handleLogin(){
+    if(!email||!password)return setMsg({type:"err",text:"Enter email and password"});
+    setLoading(true);setMsg(null);
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error)return setMsg({type:"err",text:error.message}),setLoading(false);
+    const {data:team}=await sb.from("teams").select("*").eq("user_id",data.user.id).maybeSingle();
+    if(!team)return setMsg({type:"err",text:"Account found but no team — please sign up instead."}),setLoading(false);
     setLoading(false);
+    onAuth(data.user, team);
+  }
+
+  async function handleSignup(){
+    if(!email||!password||!username)return setMsg({type:"err",text:"Fill in all fields"});
+    if(password.length<6)return setMsg({type:"err",text:"Password must be at least 6 characters"});
+    const uv=username.trim().toLowerCase().replace(/[^a-z0-9_]/g,"");
+    if(!uv)return setMsg({type:"err",text:"Username can only contain letters, numbers, underscores"});
+    setLoading(true);setMsg(null);
+    // Check username not taken
+    const {data:existing}=await sb.from("teams").select("id").eq("username",uv).maybeSingle();
+    if(existing)return setMsg({type:"err",text:"Username already taken"}),setLoading(false);
+    // Create auth user
+    const {data,error}=await sb.auth.signUp({email,password});
+    if(error)return setMsg({type:"err",text:error.message}),setLoading(false);
+    if(!data.user)return setMsg({type:"ok",text:"Check your email to confirm your account, then log in!"}),setLoading(false);
+    // Create team row
+    const tn=teamName.trim()||uv+"'s XI";
+    const {data:team,error:te}=await sb.from("teams")
+      .insert({...DEFAULT_ROW,user_id:data.user.id,username:uv,team_name:tn,badge})
+      .select().single();
+    if(te)return setMsg({type:"err",text:te.message}),setLoading(false);
+    setLoading(false);
+    onAuth(data.user, team);
+  }
+
+  async function handleForgot(){
+    if(!email)return setMsg({type:"err",text:"Enter your email first"});
+    await sb.auth.resetPasswordForEmail(email);
+    setMsg({type:"ok",text:"Password reset email sent!"});
   }
 
   return(
-    <div style={{minHeight:"100vh",background:C.forest,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
+    <div style={{minHeight:"100vh",background:"#080C14",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}>
       <style>{css}</style>
       <div style={{width:"100%",maxWidth:380}}>
+        {/* Logo */}
         <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{width:56,height:56,background:C.gold,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 10px"}}>⚽</div>
-          <div className="cd" style={{fontSize:28,fontWeight:800,color:C.gold,letterSpacing:2}}>CAF FANTASY</div>
-          <div className="cb" style={{fontSize:10,color:C.muted,letterSpacing:3,textTransform:"uppercase",marginTop:2}}>Africa Cup · 2025/26</div>
+          <div style={{width:56,height:56,background:"#FF6B35",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 10px",boxShadow:"0 0 24px rgba(255,107,53,0.4)"}}>⚽</div>
+          <div className="cd" style={{fontSize:28,fontWeight:800,color:"#FF6B35",letterSpacing:2}}>CAF FANTASY</div>
+          <div className="cb" style={{fontSize:10,color:"#6B7A99",letterSpacing:3,textTransform:"uppercase",marginTop:2}}>Africa Cup · 2025/26</div>
         </div>
-        <div style={{background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:14,padding:22,display:"flex",flexDirection:"column",gap:13}}>
-          <div>
-            <div className="cb" style={{fontSize:11,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Username</div>
-            <div style={{display:"flex",gap:8}}>
-              <input className="inp cb" value={u} onChange={e=>{setU(e.target.value);setChecked(false);}} onKeyDown={e=>e.key==="Enter"&&check()} placeholder="pick a username" style={{flex:1}}/>
-              {!checked&&<button className="nb cb" onClick={check} style={{background:C.sage+"40",border:`1px solid ${C.sage}`,borderRadius:8,padding:"0 14px",color:C.cream,fontSize:13,fontWeight:600,whiteSpace:"nowrap"}}>Go →</button>}
-            </div>
-          </div>
-          {checked&&isNew&&(<>
-            <div className="cb" style={{fontSize:12,color:C.amber,padding:"7px 11px",background:C.amber+"15",borderRadius:8}}>✨ New manager — set up your team</div>
-            <div>
-              <div className="cb" style={{fontSize:11,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Team Name</div>
-              <input className="inp cb" value={tn} onChange={e=>setTn(e.target.value)} placeholder="e.g. Desert Eagles FC"/>
-            </div>
-            <div>
-              <div className="cb" style={{fontSize:11,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:7}}>Badge</div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-                {BADGES.map(b=>(<button key={b} className="nb" onClick={()=>setBadge(b)} style={{width:38,height:38,borderRadius:8,border:`2px solid ${badge===b?C.gold:C.gold+"20"}`,background:badge===b?C.gold+"20":"transparent",fontSize:19}}>{b}</button>))}
+
+        {/* Mode toggle */}
+        <div style={{display:"flex",gap:0,marginBottom:16,background:"#060A12",borderRadius:10,padding:4,border:"1px solid rgba(255,255,255,0.08)"}}>
+          {["login","signup"].map(m=>(
+            <button key={m} className="nb cb" onClick={()=>{setMode(m);setMsg(null);}}
+              style={{flex:1,padding:"9px",borderRadius:7,fontSize:13,fontWeight:600,background:mode===m?"#FF6B35":"transparent",color:mode===m?"#080C14":"#6B7A99",transition:"all 0.18s"}}>
+              {m==="login"?"Sign In":"Create Account"}
+            </button>
+          ))}
+        </div>
+
+        <div style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.01)",borderRadius:14,padding:22,display:"flex",flexDirection:"column",gap:12}}>
+          {mode==="signup"&&(
+            <>
+              <div>
+                <div className="cb" style={{fontSize:11,color:"#6B7A99",letterSpacing:1,textTransform:"uppercase",marginBottom:5}}>Username</div>
+                <input className="inp cb" value={username} onChange={e=>setUsername(e.target.value)} placeholder="letters, numbers, underscores"/>
               </div>
-            </div>
-          </>)}
-          {checked&&!isNew&&<div className="cb" style={{fontSize:12,color:C.sage,padding:"7px 11px",background:C.sage+"20",borderRadius:8}}>👋 Welcome back!</div>}
-          {err&&<div className="cb" style={{fontSize:12,color:"#E07272",padding:"7px 11px",background:"rgba(192,82,42,0.15)",borderRadius:8}}>{err}</div>}
-          {checked&&<button className="btn-gold" onClick={submit} disabled={loading}>{loading?"Loading…":isNew?"Create Team":"Enter"}</button>}
+              <div>
+                <div className="cb" style={{fontSize:11,color:"#6B7A99",letterSpacing:1,textTransform:"uppercase",marginBottom:5}}>Team Name</div>
+                <input className="inp cb" value={teamName} onChange={e=>setTeamName(e.target.value)} placeholder="e.g. Desert Eagles FC"/>
+              </div>
+              <div>
+                <div className="cb" style={{fontSize:11,color:"#6B7A99",letterSpacing:1,textTransform:"uppercase",marginBottom:7}}>Badge</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                  {BADGES.map(b=>(<button key={b} className="nb" onClick={()=>setBadge(b)} style={{width:38,height:38,borderRadius:8,border:`2px solid ${badge===b?"#FF6B35":"#FF6B35"+"20"}`,background:badge===b?"#FF6B35"+"20":"transparent",fontSize:19}}>{b}</button>))}
+                </div>
+              </div>
+              <div style={{height:1,background:"rgba(255,107,53,0.01)"}}/>
+            </>
+          )}
+          <div>
+            <div className="cb" style={{fontSize:11,color:"#6B7A99",letterSpacing:1,textTransform:"uppercase",marginBottom:5}}>Email</div>
+            <input className="inp cb" type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(mode==="login"?handleLogin():handleSignup())} placeholder="your@email.com"/>
+          </div>
+          <div>
+            <div className="cb" style={{fontSize:11,color:"#6B7A99",letterSpacing:1,textTransform:"uppercase",marginBottom:5}}>Password</div>
+            <input className="inp cb" type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(mode==="login"?handleLogin():handleSignup())} placeholder={mode==="signup"?"at least 6 characters":"••••••••"}/>
+          </div>
+
+          {msg&&<div className={msg.type==="err"?"err-box cb":"ok-box cb"}>{msg.text}</div>}
+
+          <button className="btn-gold" onClick={mode==="login"?handleLogin:handleSignup} disabled={loading}>
+            {loading?"Please wait…":mode==="login"?"Sign In →":"Create Team →"}
+          </button>
+
+          {mode==="login"&&(
+            <button className="nb cb" onClick={handleForgot} style={{fontSize:11,color:"#6B7A99",textAlign:"center",padding:"4px 0"}}>
+              Forgot password?
+            </button>
+          )}
         </div>
-        <div className="cb" style={{fontSize:11,color:C.muted,textAlign:"center",marginTop:12}}>No password · each manager picks their own username</div>
+        <div className="cb" style={{fontSize:11,color:"#6B7A99",textAlign:"center",marginTop:12}}>
+          Secured by Supabase Auth · your password is never stored by this app
+        </div>
       </div>
     </div>
   );
 }
 
 /* ════════════════════════════════════
-   PLAYER CARD MODAL
+   PLAYER MODAL
 ════════════════════════════════════ */
-function PlayerModal({player,inSquad,onAdd,onRemove,onClose,canAdd}){
-  const p=player;
+function PlayerModal({player:p,inSquad,onAdd,onRemove,onClose,canAdd,reason}){
   const s=p.stats;
   return(
     <div className="modal-bg" onClick={onClose}>
       <div className="modal cb" onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-          <div style={{width:52,height:52,borderRadius:"50%",background:POS[p.pos].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,border:`2px solid ${POS[p.pos].text}50`,flexShrink:0}}>{p.flag}</div>
+          <div style={{width:50,height:50,borderRadius:"50%",background:POS[p.pos].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{p.flag}</div>
           <div style={{flex:1}}>
-            <div className="cd" style={{fontSize:20,fontWeight:800,color:C.cream,lineHeight:1}}>{p.name}</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{p.club} · <span style={{background:POS[p.pos].bg,color:POS[p.pos].text,padding:"1px 6px",borderRadius:3,fontSize:10,fontWeight:700}}>{p.pos}</span></div>
+            <div className="cd" style={{fontSize:20,fontWeight:800,color:"#F0F4FF",lineHeight:1}}>{p.name}</div>
+            <div style={{fontSize:12,color:"#6B7A99",marginTop:2}}>{p.club} · <span style={{background:POS[p.pos].bg,color:POS[p.pos].text,padding:"1px 6px",borderRadius:3,fontSize:10,fontWeight:700}}>{p.pos}</span></div>
           </div>
           <div style={{textAlign:"right"}}>
-            <div className="cd" style={{fontSize:22,fontWeight:800,color:C.gold}}>£{p.price}m</div>
-            <div style={{fontSize:11,color:C.muted}}>Sel: {p.sel}%</div>
+            <div className="cd" style={{fontSize:22,fontWeight:800,color:"#FF6B35"}}>£{p.price}m</div>
+            <div style={{fontSize:11,color:"#6B7A99"}}>Sel: {p.sel}%</div>
           </div>
         </div>
-
-        {/* Stats grid */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:16}}>
-          {[
-            {l:"Total Pts",v:p.pts},{l:"Form",v:p.form.toFixed(1)},
-            {l:"Goals",v:s.goals},{l:"Assists",v:s.assists},
-            ...(p.pos==="GK"?[{l:"Saves",v:s.saves},{l:"Clean Sheets",v:s.cs}]:[{l:"Clean Sheets",v:s.cs},{l:"Bonus",v:s.bonus}]),
-            {l:"Yellow",v:s.yc},{l:"Red",v:s.rc},
-          ].map(x=>(
-            <div key={x.l} style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
-              <div className="cd" style={{fontSize:18,fontWeight:700,color:C.amber}}>{x.v}</div>
-              <div style={{fontSize:9,color:C.muted,marginTop:1}}>{x.l}</div>
-            </div>
-          ))}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7,marginBottom:16}}>
+          {[{l:"Total Pts",v:p.pts},{l:"Form",v:p.form.toFixed(1)},{l:"Goals",v:s.goals},{l:"Assists",v:s.assists},
+            ...(p.pos==="GK"?[{l:"Saves",v:s.saves},{l:"Clean Sh.",v:s.cs}]:[{l:"Clean Sh.",v:s.cs},{l:"Bonus",v:s.bonus}]),
+            {l:"Yellow",v:s.yc},{l:"Red",v:s.rc}
+          ].map(x=>(<div key={x.l} style={{background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"8px 6px",border:"1px solid rgba(255,255,255,0.06)",textAlign:"center"}}>
+            <div className="cd" style={{fontSize:17,fontWeight:700,color:"#FFD166"}}>{x.v}</div>
+            <div style={{fontSize:9,color:"#6B7A99",marginTop:1}}>{x.l}</div>
+          </div>))}
         </div>
-
-        {/* Fixtures */}
-        <div style={{marginBottom:16}}>
-          <div style={{fontSize:10,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Upcoming Fixtures</div>
-          {FIXTURES.filter(f=>f.hc===p.nation||f.ac===p.nation).slice(0,3).map((f,i)=>{
-            const isHome=f.hc===p.nation;
-            const opp=isHome?f.away:f.home;
-            const diff=isHome?f.ad:f.hd;
-            return(
-              <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"5px 0",borderBottom:`1px solid rgba(255,255,255,0.05)`}}>
-                <div style={{fontSize:12}}>{isHome?f.hf:f.af} {opp} <span style={{fontSize:10,color:C.muted}}>{isHome?"(H)":"(A)"}</span></div>
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <DiffBadge d={diff}/>
-                  <span style={{fontSize:11,color:C.muted}}>{f.date}</span>
-                </div>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:10,color:"#6B7A99",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>GW28 Fixtures</div>
+          {FIXTURES.filter(f=>f.hc===p.nation||f.ac===p.nation).map((f,i)=>{
+            const isH=f.hc===p.nation;
+            const diff=isH?f.ad:f.hd;
+            const dColors=["","#2E7D32","#66BB6A","#FFA726","#EF5350","#B71C1C"];
+            return(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:`1px solid rgba(255,255,255,0.05)`}}>
+              <div style={{fontSize:12}}>{isH?f.hf:f.af} {isH?f.away:f.home} <span style={{fontSize:10,color:"#6B7A99"}}>{isH?"(H)":"(A)"}</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{background:dColors[diff],color:"white",fontSize:9,fontWeight:800,padding:"1px 5px",borderRadius:3}}>{diff}</span>
+                <span style={{fontSize:10,color:"#6B7A99"}}>{f.date}</span>
               </div>
-            );
+            </div>);
           })}
+          {FIXTURES.filter(f=>f.hc===p.nation||f.ac===p.nation).length===0&&<div style={{fontSize:12,color:"#6B7A99"}}>No fixtures this GW</div>}
         </div>
-
         <div style={{display:"flex",gap:8}}>
           {inSquad
-            ? <button className="nb ch cb" onClick={onRemove} style={{flex:1,background:"rgba(192,82,42,0.2)",border:"1px solid rgba(192,82,42,0.4)",borderRadius:8,padding:"11px",color:"#E07272",fontWeight:700,fontSize:14}}>Remove Player</button>
-            : <button className="nb ch cb" onClick={onAdd} disabled={!canAdd} style={{flex:1,background:canAdd?C.gold+"20":"rgba(255,255,255,0.05)",border:`1px solid ${canAdd?C.gold+"50":"rgba(255,255,255,0.1)"}`,borderRadius:8,padding:"11px",color:canAdd?C.gold:C.muted,fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed"}}>
-                {canAdd?"Add to Squad":"Cannot Add"}
+            ?<button className="nb ch cb" onClick={onRemove} style={{flex:1,background:"rgba(192,82,42,0.2)",border:"1px solid rgba(192,82,42,0.4)",borderRadius:8,padding:11,color:"#E07272",fontWeight:700,fontSize:14}}>Remove</button>
+            :<button className="nb ch cb" onClick={onAdd} disabled={!canAdd} title={reason||""}
+                style={{flex:1,background:canAdd?"#FF6B35"+"20":"rgba(255,255,255,0.04)",border:`1px solid ${canAdd?"#FF6B35"+"50":"rgba(255,255,255,0.1)"}`,borderRadius:8,padding:11,color:canAdd?"#FF6B35":"#6B7A99",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed"}}>
+                {canAdd?"Add to Squad":reason||"Cannot Add"}
               </button>
           }
-          <button className="nb ch cb" onClick={onClose} style={{padding:"11px 16px",border:`1px solid ${C.gold}20`,borderRadius:8,color:C.muted,fontSize:14}}>Close</button>
+          <button className="nb ch cb" onClick={onClose} style={{padding:"11px 16px",border:"1px solid rgba(255,107,53,0.02)",borderRadius:8,color:"#6B7A99",fontSize:14}}>✕</button>
         </div>
       </div>
     </div>
@@ -328,189 +331,184 @@ function PlayerModal({player,inSquad,onAdd,onRemove,onClose,canAdd}){
 /* ════════════════════════════════════
    MAIN APP
 ════════════════════════════════════ */
-function App({initialTeam}){
-  const [row,setRow]               = useState(initialTeam);
-  const [tab,setTab]               = useState("team");
-  const [saveStatus,setSS]         = useState("idle");
-  const [modal,setModal]           = useState(null);      // player id
-  const [transferFilter,setTF]     = useState("ALL");
-  const [transferSort,setTS]       = useState("pts");
-  const [transferSearch,setTSearch]= useState("");
-  const [leagueData,setLeague]     = useState([]);
-  const [leagueLoading,setLL]      = useState(false);
-  const [editName,setEditName]     = useState(false);
-  const [nameInput,setNameInput]   = useState("");
-  const [chipMenu,setChipMenu]     = useState(false);
+function App({user,initialTeam}){
+  const [row,setRow]             = useState(initialTeam);
+  const [tab,setTab]             = useState("team");
+  const [saveStatus,setSS]       = useState("idle");
+  const [modal,setModal]         = useState(null);
+  const [tfFilter,setTfFilter]   = useState("ALL");
+  const [tfSort,setTfSort]       = useState("pts");
+  const [tfSearch,setTfSearch]   = useState("");
+  const [leagueData,setLeague]   = useState([]);
+  const [leagueLoading,setLL]    = useState(false);
+  const [liveCount,setLiveCount] = useState(0); // realtime connected peers
+  const [editName,setEditName]   = useState(false);
+  const [nameInput,setNameInput] = useState("");
+  const [chipMenu,setChipMenu]   = useState(false);
   const saveTimer = useRef(null);
+  const rtRef = useRef(null);
 
-  /* ── derived ── */
+  /* ── Realtime: subscribe to league changes ── */
+  useEffect(()=>{
+    const channel = sb.channel("league_updates")
+      .on("postgres_changes",{event:"*",schema:"public",table:"teams"},(payload)=>{
+        setLeague(prev=>prev.map(r=>r.user_id===payload.new.user_id?{...r,...payload.new}:r)
+          .sort((a,b)=>(b.total_pts||0)-(a.total_pts||0))
+          .map((r,i)=>({...r,rank:i+1})));
+      })
+      .on("presence",{event:"sync"},()=>{
+        const state=channel.presenceState();
+        setLiveCount(Object.keys(state).length);
+      })
+      .subscribe(async(status)=>{
+        if(status==="SUBSCRIBED"){
+          await channel.track({user_id:user.id});
+        }
+      });
+    rtRef.current=channel;
+    return()=>{ sb.removeChannel(channel); };
+  },[]);
+
+  /* ── Derived ── */
   const squadAll = useMemo(()=>[...byIds(row.gk_ids),...byIds(row.def_ids),...byIds(row.mid_ids),...byIds(row.fwd_ids)],[row]);
   const squadIds = useMemo(()=>new Set(squadAll.map(p=>p.id)),[squadAll]);
   const startIds = useMemo(()=>new Set(row.starting_ids),[row.starting_ids]);
-  const fmDef    = FORMATION_DEF[row.formation]||FORMATION_DEF["4-3-3"];
+  const chip3x   = row.active_chip==="triple_cap";
 
-  /* Starting XI rows for pitch */
-  const startGK  = byIds(row.starting_ids).filter(p=>p.pos==="GK");
-  const startDEF = byIds(row.starting_ids).filter(p=>p.pos==="DEF");
-  const startMID = byIds(row.starting_ids).filter(p=>p.pos==="MID");
-  const startFWD = byIds(row.starting_ids).filter(p=>p.pos==="FWD");
+  const startGK  = byIds(row.starting_ids).filter(p=>p&&p.pos==="GK");
+  const startDEF = byIds(row.starting_ids).filter(p=>p&&p.pos==="DEF");
+  const startMID = byIds(row.starting_ids).filter(p=>p&&p.pos==="MID");
+  const startFWD = byIds(row.starting_ids).filter(p=>p&&p.pos==="FWD");
   const bench    = byIds(row.bench_ids);
 
-  const chip3x = row.active_chip==="triple_cap";
-
-  /* Points */
   const gwPts = useMemo(()=>{
     let t=0;
-    row.starting_ids.forEach(id=>{
-      const p=byId(id);if(!p)return;
-      t+=calcPoints(p,id===row.captain_id,id===row.vice_captain_id,chip3x,true);
-    });
-    if(row.active_chip==="bench_boost"){
-      row.bench_ids.forEach(id=>{const p=byId(id);if(p)t+=calcPoints(p,false,false,false,true);});
-    }
-    t-=row.transfer_hits*4;
+    (row.starting_ids||[]).forEach(id=>{const p=byId(id);if(p)t+=calcPts(p,id===row.captain_id,id===row.vice_captain_id,chip3x,true);});
+    if(row.active_chip==="bench_boost")(row.bench_ids||[]).forEach(id=>{const p=byId(id);if(p)t+=calcPts(p,false,false,false,true);});
+    t-=(row.transfer_hits||0)*4;
     return t;
   },[row]);
 
-  const totalPts = row.total_pts || gwPts;
-
-  /* ── save ── */
+  /* ── Auto-save ── */
   const scheduleSave = useCallback((r)=>{
-    clearTimeout(saveTimer.current);
-    setSS("saving");
+    clearTimeout(saveTimer.current);setSS("saving");
     saveTimer.current=setTimeout(async()=>{
       const {error}=await sb.from("teams").update({
-        team_name:r.team_name,badge:r.badge,budget:r.budget,
-        free_transfers:r.free_transfers,transfer_hits:r.transfer_hits,
-        gk_ids:r.gk_ids,def_ids:r.def_ids,mid_ids:r.mid_ids,fwd_ids:r.fwd_ids,
-        starting_ids:r.starting_ids,bench_ids:r.bench_ids,
-        captain_id:r.captain_id,vice_captain_id:r.vice_captain_id,
-        formation:r.formation,chips_used:r.chips_used,active_chip:r.active_chip,
-      }).eq("id",r.id);
-      setSS(error?"error":"saved");
-      setTimeout(()=>setSS("idle"),2000);
+        team_name:r.team_name,badge:r.badge,budget:r.budget,free_transfers:r.free_transfers,
+        transfer_hits:r.transfer_hits,gk_ids:r.gk_ids,def_ids:r.def_ids,mid_ids:r.mid_ids,
+        fwd_ids:r.fwd_ids,starting_ids:r.starting_ids,bench_ids:r.bench_ids,
+        captain_id:r.captain_id,vice_captain_id:r.vice_captain_id,formation:r.formation,
+        chips_used:r.chips_used,active_chip:r.active_chip,
+      }).eq("user_id",user.id);
+      setSS(error?"error":"saved");setTimeout(()=>setSS("idle"),2000);
     },700);
-  },[]);
+  },[user.id]);
 
-  function update(patch){
-    setRow(prev=>{const next={...prev,...patch};scheduleSave(next);return next;});
-  }
+  function update(patch){setRow(prev=>{const next={...prev,...patch};scheduleSave(next);return next;});}
 
-  /* ── league ── */
+  /* ── League ── */
   async function fetchLeague(){
     setLL(true);
-    const {data}=await sb.from("teams").select("username,team_name,badge,gw_pts,total_pts").order("total_pts",{ascending:false});
+    const {data}=await sb.from("teams").select("user_id,username,team_name,badge,gw_pts,total_pts").order("total_pts",{ascending:false});
     if(data)setLeague(data.map((r,i)=>({...r,rank:i+1})));
     setLL(false);
   }
   useEffect(()=>{if(tab==="leagues")fetchLeague();},[tab]);
 
-  /* ── transfer logic ── */
-  const avail = useMemo(()=>PLAYERS
-    .filter(p=>transferFilter==="ALL"||p.pos===transferFilter)
-    .filter(p=>p.name.toLowerCase().includes(transferSearch.toLowerCase())||p.club.toLowerCase().includes(transferSearch.toLowerCase()))
-    .sort((a,b)=>transferSort==="pts"?b.pts-a.pts:transferSort==="price"?b.price-a.price:b.form-a.form)
-  ,[transferFilter,transferSearch,transferSort]);
+  /* ── Transfer logic ── */
+  function canAddPlayer(p){
+    if(squadIds.has(p.id))return{ok:false,reason:"Already in squad"};
+    const key=p.pos==="GK"?"gk_ids":p.pos==="DEF"?"def_ids":p.pos==="MID"?"mid_ids":"fwd_ids";
+    if((row[key]||[]).length>=POS[p.pos].limit)return{ok:false,reason:`Max ${POS[p.pos].limit} ${p.pos}s`};
+    if(p.price>row.budget)return{ok:false,reason:"Not enough budget"};
+    if(squadAll.filter(q=>q.club===p.club).length>=3)return{ok:false,reason:"Max 3 per club"};
+    return{ok:true};
+  }
 
   function addPlayer(p){
-    if(squadIds.has(p.id))return;
+    const {ok}=canAddPlayer(p);if(!ok)return;
     const key=p.pos==="GK"?"gk_ids":p.pos==="DEF"?"def_ids":p.pos==="MID"?"mid_ids":"fwd_ids";
-    const cur=row[key]||[];
-    if(cur.length>=POS[p.pos].limit)return;
-    const isFree=row.free_transfers>0||row.active_chip==="wildcard"||row.active_chip==="free_hit";
-    const hits=isFree?row.transfer_hits:row.transfer_hits+1;
-    const ft=isFree?Math.max(0,row.free_transfers-1):row.free_transfers;
-    update({[key]:[...cur,p.id],budget:+(row.budget-p.price).toFixed(1),free_transfers:ft,transfer_hits:hits});
+    const isFree=(row.free_transfers||0)>0||row.active_chip==="wildcard"||row.active_chip==="free_hit";
+    update({[key]:[...(row[key]||[]),p.id],budget:+(row.budget-p.price).toFixed(1),
+      free_transfers:isFree?Math.max(0,(row.free_transfers||0)-1):row.free_transfers,
+      transfer_hits:isFree?(row.transfer_hits||0):(row.transfer_hits||0)+1});
     setModal(null);
   }
 
   function removePlayer(p){
     const key=p.pos==="GK"?"gk_ids":p.pos==="DEF"?"def_ids":p.pos==="MID"?"mid_ids":"fwd_ids";
-    const newIds=(row[key]||[]).filter(id=>id!==p.id);
-    const newStart=row.starting_ids.filter(id=>id!==p.id);
-    const newBench=row.bench_ids.filter(id=>id!==p.id);
-    update({[key]:newIds,starting_ids:newStart,bench_ids:newBench,budget:+(row.budget+p.price).toFixed(1)});
+    update({[key]:(row[key]||[]).filter(id=>id!==p.id),
+      starting_ids:(row.starting_ids||[]).filter(id=>id!==p.id),
+      bench_ids:(row.bench_ids||[]).filter(id=>id!==p.id),
+      budget:+(row.budget+p.price).toFixed(1)});
     setModal(null);
   }
 
-  function canAdd(p){
-    if(squadIds.has(p.id))return false;
-    const key=p.pos==="GK"?"gk_ids":p.pos==="DEF"?"def_ids":p.pos==="MID"?"mid_ids":"fwd_ids";
-    if((row[key]||[]).length>=POS[p.pos].limit)return false;
-    if(p.price>row.budget)return false;
-    if(squadAll.filter(q=>q.club===p.club).length>=3)return false;
-    return true;
-  }
-
-  function toggleCaptain(id){
-    if(row.captain_id===id) update({captain_id:row.vice_captain_id,vice_captain_id:id});
-    else if(row.vice_captain_id===id) update({vice_captain_id:id});
-    else update({captain_id:id});
-  }
-  function setVice(id){ update({vice_captain_id:id}); }
-
   function activateChip(id){
     if((row.chips_used||[]).includes(id))return;
-    update({active_chip:id});
+    update({active_chip:id,chips_used:[...(row.chips_used||[]),id]});
     setChipMenu(false);
   }
 
-  /* ── nav ── */
-  const nav=[
-    {id:"team",     label:"Pick Team", icon:"⚽"},
-    {id:"transfers",label:"Transfers", icon:"⇄"},
-    {id:"points",   label:"Points",    icon:"📊"},
-    {id:"leagues",  label:"Leagues",   icon:"🏆"},
-    {id:"fixtures", label:"Fixtures",  icon:"📅"},
-  ];
+  async function handleSignOut(){
+    await sb.auth.signOut();
+    window.location.reload();
+  }
 
-  /* ── PITCH PLAYER TILE ── */
-  function PitchTile({p,small}){
-    const isCap=p.id===row.captain_id, isVice=p.id===row.vice_captain_id;
-    const pts=calcPoints(p,isCap,isVice,chip3x,true);
+  const avail = useMemo(()=>PLAYERS
+    .filter(p=>tfFilter==="ALL"||p.pos===tfFilter)
+    .filter(p=>p.name.toLowerCase().includes(tfSearch.toLowerCase())||p.club.toLowerCase().includes(tfSearch.toLowerCase()))
+    .sort((a,b)=>tfSort==="pts"?b.pts-a.pts:tfSort==="price"?b.price-a.price:b.form-a.form)
+  ,[tfFilter,tfSearch,tfSort]);
+
+  const nav=[{id:"team",label:"Pick Team",icon:"⚽"},{id:"transfers",label:"Transfers",icon:"⇄"},{id:"points",label:"Points",icon:"📊"},{id:"leagues",label:"Leagues",icon:"🏆"},{id:"fixtures",label:"Fixtures",icon:"📅"}];
+
+  /* ─ Pitch tile ─ */
+  function PitchTile({p}){
+    const isCap=p.id===row.captain_id,isVice=p.id===row.vice_captain_id;
+    const pts=calcPts(p,isCap,isVice,chip3x,true);
     return(
-      <div className="ch" onClick={()=>setModal(p.id)} style={{textAlign:"center",minWidth:small?54:60,maxWidth:small?64:72,position:"relative"}}>
+      <div className="ch" onClick={()=>setModal(p.id)} style={{textAlign:"center",minWidth:60,maxWidth:72,position:"relative"}}>
         <div style={{position:"relative",display:"inline-block"}}>
-          <div style={{width:small?40:46,height:small?40:46,borderRadius:"50%",background:C.dark,border:`2px solid ${isCap?C.gold:isVice?C.amber:C.sage}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:small?18:22,margin:"0 auto"}}>{p.flag}</div>
-          {isCap&&<div style={{position:"absolute",top:-4,right:-4,width:15,height:15,borderRadius:"50%",background:C.gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:900,color:C.dark}}>C</div>}
-          {isVice&&!isCap&&<div style={{position:"absolute",top:-4,right:-4,width:15,height:15,borderRadius:"50%",background:C.amber,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:900,color:C.dark}}>V</div>}
+          <div style={{width:44,height:44,borderRadius:"50%",background:"#0D1220",border:`2px solid ${isCap?"#FF6B35":isVice?"#FFD166":"rgba(255,255,255,0.2)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,margin:"0 auto"}}>{p.flag}</div>
+          {isCap&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#FF6B35",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:900,color:"#080C14"}}>C</div>}
+          {isVice&&!isCap&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#FFD166",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:900,color:"#080C14"}}>V</div>}
         </div>
-        <div style={{background:POS[p.pos].bg,borderRadius:4,padding:"1px 3px",marginTop:2}}>
-          <div style={{fontSize:small?8:9,fontWeight:600,color:POS[p.pos].text,lineHeight:1.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:small?60:68}}>{p.name.split(" ").pop()}</div>
-        </div>
-        <div className="cd" style={{fontSize:10,fontWeight:700,color:C.amber,marginTop:1}}>{pts}pts</div>
+        <div style={{background:POS[p.pos].bg,borderRadius:4,padding:"2px 3px",marginTop:2}}><div style={{fontSize:9,fontWeight:600,color:POS[p.pos].text,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:70}}>{p.name.split(" ").pop()}</div></div>
+        <div className="cd" style={{fontSize:10,fontWeight:700,color:"#FFD166",marginTop:1}}>{pts}pts</div>
       </div>
     );
   }
 
-  const modalPlayer = modal ? byId(modal) : null;
+  const modalPlayer = modal?byId(modal):null;
+  const {ok:mOk,reason:mReason}=modalPlayer?canAddPlayer(modalPlayer):{ok:false,reason:""};
 
   return(
-    <div className="cb" style={{background:C.forest,minHeight:"100vh",color:C.cream}}>
+    <div className="cb" style={{background:"#080C14",minHeight:"100vh",color:"#F0F4FF"}}>
       <style>{css}</style>
 
       {/* ── HEADER ── */}
-      <div className="geo" style={{background:C.dark,borderBottom:`2px solid ${C.gold}30`,position:"sticky",top:0,zIndex:100}}>
+      <div className="geo" style={{background:"#080C14",borderBottom:"1px solid rgba(255,107,53,0.2)",position:"sticky",top:0,zIndex:100}}>
         <div style={{maxWidth:900,margin:"0 auto",padding:"9px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:34,height:34,background:C.gold,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>⚽</div>
+            <div style={{width:32,height:32,background:"#FF6B35",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 0 16px rgba(255,107,53,0.3)"}}>⚽</div>
             <div>
-              <div className="cd" style={{fontSize:20,fontWeight:800,letterSpacing:1,color:C.gold,lineHeight:1}}>CAF FANTASY</div>
-              <div style={{fontSize:8,color:C.muted,letterSpacing:3,textTransform:"uppercase"}}>Africa Cup · 2025/26</div>
+              <div className="cd" style={{fontSize:19,fontWeight:800,letterSpacing:2,color:"#FF6B35",lineHeight:1,fontFamily:"'Barlow Condensed',sans-serif"}}>CAF FANTASY</div>
+              <div style={{fontSize:8,color:"#6B7A99",letterSpacing:3,textTransform:"uppercase",color:"#6B7A99"}}>Africa Cup · 2025/26</div>
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
+            {liveCount>0&&<span className="live-badge"><span className="pulse-dot"/>{liveCount} online</span>}
             <div style={{textAlign:"right"}}>
-              <div className="cd" style={{fontSize:15,fontWeight:700,color:C.amber}}>GW 27 <SaveDot s={saveStatus}/></div>
-              <div style={{fontSize:8,color:C.muted}}>{row.username}</div>
+              <div className="cd" style={{fontSize:15,fontWeight:700,color:"#FF6B35"}}>GW 27 <SaveDot s={saveStatus}/></div>
+              <div style={{fontSize:8,color:"#6B7A99"}}>{row.username||user.email}</div>
             </div>
-            <div style={{width:32,height:32,borderRadius:"50%",background:C.sage,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,border:`2px solid ${C.gold}40`}}>{row.badge}</div>
+            <div className="ch" style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,107,53,0.15)",border:"1px solid rgba(255,107,53,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,border:"2px solid rgba(255,107,53,0.04)"}} onClick={handleSignOut} title="Sign out">{row.badge}</div>
           </div>
         </div>
-        <div style={{maxWidth:900,margin:"0 auto",display:"flex",borderTop:`1px solid ${C.gold}15`}}>
+        <div className="tab-bar" style={{maxWidth:900,margin:"0 auto"}}>
           {nav.map(n=>(
-            <button key={n.id} className={`nb cb${tab===n.id?" ta":""}`} onClick={()=>setTab(n.id)}
-              style={{flex:1,padding:"8px 2px",fontSize:10,fontWeight:600,color:tab===n.id?C.gold:C.muted,borderBottom:"3px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+            <button key={n.id} className={`tab-btn${tab===n.id?" ta":""}`} onClick={()=>setTab(n.id)}>
               <span style={{fontSize:12}}>{n.icon}</span><span>{n.label}</span>
             </button>
           ))}
@@ -519,458 +517,388 @@ function App({initialTeam}){
 
       <div style={{maxWidth:900,margin:"0 auto",padding:"12px 10px"}} className="fi">
 
-        {/* ══════════════════════
-            PICK TEAM
-        ══════════════════════ */}
+        {/* ══ PICK TEAM ══ */}
         {tab==="team"&&(
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
-
-            {/* Top bar */}
-            <div style={{display:"flex",gap:8,alignItems:"stretch"}}>
-              {/* Team name */}
-              <div style={{flex:1,background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:10,padding:"10px 12px"}}>
+            {/* Info bar */}
+            <div style={{display:"flex",gap:8}}>
+              <div style={{flex:1,background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.02)",borderRadius:10,padding:"10px 12px"}}>
                 {editName?(
                   <div style={{display:"flex",gap:6}}>
                     <input className="inp cb" value={nameInput} onChange={e=>setNameInput(e.target.value)} style={{flex:1,fontSize:13,padding:"6px 10px"}}/>
-                    <button className="nb" onClick={()=>{update({team_name:nameInput.trim()||row.team_name});setEditName(false);}} style={{background:C.gold,color:C.dark,borderRadius:6,padding:"0 10px",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓</button>
+                    <button className="nb" onClick={()=>{update({team_name:nameInput.trim()||row.team_name});setEditName(false);}} style={{background:"#FF6B35",color:"#0D1220",borderRadius:6,padding:"0 10px",fontWeight:700,cursor:"pointer"}}>✓</button>
                   </div>
                 ):(
                   <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"space-between"}}>
                     <div>
-                      <div className="cd" style={{fontSize:17,fontWeight:800,color:C.gold,lineHeight:1}}>{row.team_name}</div>
-                      <div style={{fontSize:10,color:C.muted}}>£{row.budget.toFixed(1)}m left · {row.free_transfers} free transfer{row.free_transfers!==1?"s":""}</div>
+                      <div className="cd" style={{fontSize:16,fontWeight:800,color:"#FF6B35",lineHeight:1}}>{row.team_name}</div>
+                      <div style={{fontSize:10,color:"#6B7A99"}}>£{row.budget.toFixed(1)}m · {row.free_transfers} FT</div>
                     </div>
-                    <button className="nb" onClick={()=>{setNameInput(row.team_name);setEditName(true);}} style={{fontSize:11,color:C.muted,border:`1px solid ${C.gold}20`,borderRadius:5,padding:"4px 8px"}}>✏️</button>
+                    <button className="nb" onClick={()=>{setNameInput(row.team_name);setEditName(true);}} style={{fontSize:11,color:"#6B7A99",border:"1px solid rgba(255,107,53,0.02)",borderRadius:5,padding:"3px 7px"}}>✏️</button>
                   </div>
                 )}
               </div>
-              {/* GW pts */}
-              <div style={{background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:10,padding:"10px 14px",textAlign:"center",minWidth:72}}>
-                <div style={{fontSize:9,color:C.muted}}>GW Pts</div>
-                <div className="cd" style={{fontSize:26,fontWeight:800,color:C.amber,lineHeight:1}}>{gwPts}</div>
+              <div style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.02)",borderRadius:10,padding:"10px 12px",textAlign:"center",minWidth:64}}>
+                <div style={{fontSize:8,color:"#6B7A99"}}>GW</div>
+                <div className="cd" style={{fontSize:24,fontWeight:800,color:"#FFD166",lineHeight:1}}>{gwPts}</div>
               </div>
-              <div style={{background:C.dark,border:`1px solid ${C.gold}20`,borderRadius:10,padding:"10px 14px",textAlign:"center",minWidth:72}}>
-                <div style={{fontSize:9,color:C.muted}}>Total</div>
-                <div className="cd" style={{fontSize:26,fontWeight:800,color:C.gold,lineHeight:1}}>{totalPts}</div>
+              <div style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.02)",borderRadius:10,padding:"10px 12px",textAlign:"center",minWidth:64}}>
+                <div style={{fontSize:8,color:"#6B7A99"}}>Total</div>
+                <div className="cd" style={{fontSize:24,fontWeight:800,color:"#FF6B35",lineHeight:1}}>{row.total_pts||0}</div>
               </div>
             </div>
 
-            {/* Formation + chips row */}
+            {/* Formation + chips */}
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <div style={{fontSize:10,color:C.muted}}>Formation:</div>
-              <select className="inp cb" value={row.formation} onChange={e=>update({formation:e.target.value})}
-                style={{width:"auto",padding:"5px 10px",fontSize:12,flex:1}}>
+              <select className="inp cb" value={row.formation} onChange={e=>update({formation:e.target.value})} style={{width:"auto",flex:1,padding:"6px 10px",fontSize:12}}>
                 {FORMATIONS.map(f=><option key={f} value={f}>{f}</option>)}
               </select>
               <button className="nb ch cb" onClick={()=>setChipMenu(!chipMenu)}
-                style={{background:row.active_chip?C.gold+"30":C.dark,border:`1px solid ${row.active_chip?C.gold:C.gold+"20"}`,borderRadius:8,padding:"6px 12px",fontSize:11,color:row.active_chip?C.gold:C.muted,fontWeight:600,whiteSpace:"nowrap"}}>
+                style={{background:row.active_chip?"#FF6B35"+"25":"#0D1220",border:`1px solid ${row.active_chip?"#FF6B35":"#FF6B35"+"20"}`,borderRadius:8,padding:"6px 12px",fontSize:11,color:row.active_chip?"#FF6B35":"#6B7A99",fontWeight:600,whiteSpace:"nowrap"}}>
                 {row.active_chip?CHIPS.find(c=>c.id===row.active_chip)?.icon+" Active":"🃏 Chips"}
               </button>
             </div>
 
-            {/* Chip menu */}
             {chipMenu&&(
-              <div style={{background:C.dark,border:`1px solid ${C.gold}25`,borderRadius:12,padding:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.02)",borderRadius:12,padding:10,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 {CHIPS.map(c=>{
-                  const used=(row.chips_used||[]).includes(c.id);
+                  const used=(row.chips_used||[]).includes(c.id)&&row.active_chip!==c.id;
                   const active=row.active_chip===c.id;
-                  return(
-                    <button key={c.id} className="nb ch" onClick={()=>!used&&activateChip(c.id)}
-                      style={{background:active?C.gold+"25":used?"rgba(255,255,255,0.03)":"rgba(255,255,255,0.06)",border:`1px solid ${active?C.gold:used?"rgba(255,255,255,0.08)":C.gold+"20"}`,borderRadius:8,padding:"10px 10px",textAlign:"left",opacity:used&&!active?0.4:1,cursor:used?"default":"pointer"}}>
-                      <div style={{fontSize:18,marginBottom:4}}>{c.icon}</div>
-                      <div className="cd" style={{fontSize:13,fontWeight:700,color:active?C.gold:C.cream}}>{c.label}</div>
-                      <div className="cb" style={{fontSize:10,color:C.muted,marginTop:1}}>{used&&!active?"Used":c.desc}</div>
-                    </button>
-                  );
+                  return(<button key={c.id} className="nb ch" onClick={()=>!used&&activateChip(c.id)}
+                    style={{background:active?"rgba(255,107,53,0.15)":used?"rgba(255,255,255,0.02)":"rgba(255,255,255,0.04)",border:`1px solid ${active?"rgba(255,107,53,0.5)":"rgba(255,255,255,0.08)"}`,borderRadius:8,padding:"9px",textAlign:"left",opacity:used?0.4:1,cursor:used?"default":"pointer"}}>
+                    <div style={{fontSize:16,marginBottom:3}}>{c.icon}</div>
+                    <div className="cd" style={{fontSize:12,fontWeight:700,color:active?"#FF6B35":"#F0F4FF"}}>{c.label}</div>
+                    <div style={{fontSize:9,color:"#6B7A99",marginTop:1}}>{used?"Used this season":c.desc}</div>
+                  </button>);
                 })}
               </div>
             )}
 
             {/* PITCH */}
-            <div style={{background:C.pitch,borderRadius:14,overflow:"hidden",border:`2px solid ${C.sage}50`,position:"relative"}}>
-              {/* Lines */}
+            <div style={{background:"#0A5C2E",borderRadius:14,overflow:"hidden",border:`2px solid ${"#06D6A0"}50`,position:"relative"}}>
               <div style={{position:"absolute",inset:0,opacity:0.15,pointerEvents:"none"}}>
                 <div style={{position:"absolute",top:"50%",left:"6%",right:"6%",height:1,background:"white"}}/>
                 <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:64,height:64,borderRadius:"50%",border:"1px solid white"}}/>
                 <div style={{position:"absolute",top:0,left:"20%",right:"20%",height:"16%",border:"1px solid white",borderTop:"none"}}/>
                 <div style={{position:"absolute",bottom:0,left:"20%",right:"20%",height:"16%",border:"1px solid white",borderBottom:"none"}}/>
-                <div style={{position:"absolute",top:0,left:"35%",right:"35%",height:"6%",border:"1px solid white",borderTop:"none"}}/>
-                <div style={{position:"absolute",bottom:0,left:"35%",right:"35%",height:"6%",border:"1px solid white",borderBottom:"none"}}/>
               </div>
-
-              {[{pl:startFWD},{pl:startMID},{pl:startDEF},{pl:startGK}].map((row2,ri)=>(
+              {[startFWD,startMID,startDEF,startGK].map((row2,ri)=>(
                 <div key={ri} style={{display:"flex",justifyContent:"center",gap:4,padding:"10px 4px"}}>
-                  {row2.pl.map(p=><PitchTile key={p.id} p={p}/>)}
+                  {row2.map(p=>p&&<PitchTile key={p.id} p={p}/>)}
                 </div>
               ))}
-
-              {/* Bench */}
-              <div style={{background:"rgba(0,0,0,0.35)",borderTop:`1px dashed ${C.gold}25`,padding:"8px 4px"}}>
-                <div style={{fontSize:9,color:C.muted,textAlign:"center",letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Bench</div>
+              <div style={{background:"rgba(0,0,0,0.5)",borderTop:`1px dashed ${"#FF6B35"}25`,padding:"8px 4px"}}>
+                <div style={{fontSize:9,color:"#6B7A99",textAlign:"center",letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>Bench</div>
                 <div style={{display:"flex",justifyContent:"center",gap:8}}>
-                  {bench.map((p,i)=>(
-                    <div key={p.id} className="ch" onClick={()=>setModal(p.id)} style={{textAlign:"center",minWidth:52,opacity:row.active_chip==="bench_boost"?1:0.6}}>
+                  {bench.map((p,i)=>p&&(
+                    <div key={p.id} className="ch" onClick={()=>setModal(p.id)} style={{textAlign:"center",minWidth:50,opacity:row.active_chip==="bench_boost"?1:0.6}}>
                       <div style={{position:"relative",display:"inline-block"}}>
-                        <div style={{width:36,height:36,borderRadius:"50%",background:C.dark,border:`1px solid ${C.muted}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,margin:"0 auto"}}>{p.flag}</div>
-                        <div style={{position:"absolute",top:-4,left:-4,width:14,height:14,borderRadius:"50%",background:C.dark,border:`1px solid ${C.muted}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:C.muted}}>{i+1}</div>
+                        <div style={{width:34,height:34,borderRadius:"50%",background:"#0D1220",border:`1px solid ${"#6B7A99"}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,margin:"0 auto"}}>{p.flag}</div>
+                        <div style={{position:"absolute",top:-4,left:-4,width:13,height:13,borderRadius:"50%",background:"#0D1220",border:`1px solid ${"#6B7A99"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:7,fontWeight:800,color:"#6B7A99"}}>{i+1}</div>
                       </div>
-                      <div style={{background:POS[p.pos].bg+"70",borderRadius:4,padding:"1px 2px",marginTop:2}}><div style={{fontSize:8,color:POS[p.pos].text}}>{p.name.split(" ").pop()}</div></div>
-                      <div className="cd" style={{fontSize:9,color:C.muted,marginTop:1}}>£{p.price}m</div>
+                      <div style={{background:POS[p.pos].bg+"70",borderRadius:3,padding:"1px 2px",marginTop:2}}><div style={{fontSize:8,color:POS[p.pos].text}}>{p.name.split(" ").pop()}</div></div>
+                      <div className="cd" style={{fontSize:8,color:"#6B7A99"}}>£{p.price}m</div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Transfer hit warning */}
-            {row.transfer_hits>0&&(
-              <div style={{background:"rgba(192,82,42,0.15)",border:"1px solid rgba(192,82,42,0.3)",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#E07272"}}>
-                ⚠️ {row.transfer_hits} additional transfer{row.transfer_hits>1?"s":""} this GW — -{row.transfer_hits*4} pts deduction
-              </div>
+            {(row.transfer_hits||0)>0&&(
+              <div className="err-box cb">⚠️ {row.transfer_hits} extra transfer{row.transfer_hits>1?"s":""} this GW = -{row.transfer_hits*4} pts</div>
             )}
 
-            {/* Squad list by position */}
+            {/* Squad list */}
             <div>
-              <div className="cd" style={{fontSize:14,fontWeight:700,color:C.gold,letterSpacing:1,marginBottom:8,borderLeft:`3px solid ${C.gold}`,paddingLeft:8}}>SQUAD ({squadAll.length}/15)</div>
+              <div className="cd" style={{fontSize:13,fontWeight:700,color:"#FF6B35",letterSpacing:1,marginBottom:8,borderLeft:"3px solid #FF6B35",paddingLeft:8}}>SQUAD ({squadAll.length}/15)</div>
               {["GK","DEF","MID","FWD"].map(pos=>{
                 const players=squadAll.filter(p=>p.pos===pos);
-                return(
-                  <div key={pos} style={{marginBottom:10}}>
-                    <div style={{fontSize:9,letterSpacing:2,color:C.muted,textTransform:"uppercase",marginBottom:4}}>{pos} — {players.length}/{POS[pos].limit}</div>
-                    {players.map(p=>{
-                      const isStart=startIds.has(p.id);
-                      const isCap=p.id===row.captain_id,isVice=p.id===row.vice_captain_id;
-                      return(
-                        <div key={p.id} className="sr ch" onClick={()=>setModal(p.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 8px",borderRadius:6,borderLeft:`3px solid ${isStart?POS[pos].text+"60":"transparent"}`}}>
-                          <span style={{fontSize:16}}>{p.flag}</span>
-                          <div style={{flex:1}}>
-                            <div style={{display:"flex",alignItems:"center",gap:5}}>
-                              <span style={{fontSize:12,fontWeight:600}}>{p.name}</span>
-                              {isCap&&<span style={{background:C.gold,color:C.dark,fontSize:8,fontWeight:800,padding:"0 4px",borderRadius:2}}>CAP</span>}
-                              {isVice&&<span style={{background:C.amber+"40",color:C.amber,fontSize:8,fontWeight:800,padding:"0 4px",borderRadius:2}}>VICE</span>}
-                              {!isStart&&<span style={{background:"rgba(255,255,255,0.08)",color:C.muted,fontSize:8,padding:"0 4px",borderRadius:2}}>BENCH</span>}
-                            </div>
-                            <div style={{fontSize:9,color:C.muted}}>{p.club} · Form: {p.form.toFixed(1)}</div>
-                          </div>
-                          <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                            <button className="nb" onClick={e=>{e.stopPropagation();toggleCaptain(p.id);}} style={{fontSize:9,color:isCap?C.gold:C.muted,border:`1px solid ${isCap?C.gold:C.muted+"40"}`,borderRadius:3,padding:"2px 5px"}}>C</button>
-                            <button className="nb" onClick={e=>{e.stopPropagation();setVice(p.id);}} style={{fontSize:9,color:isVice?C.amber:C.muted,border:`1px solid ${isVice?C.amber:C.muted+"40"}`,borderRadius:3,padding:"2px 5px"}}>V</button>
-                          </div>
-                          <div className="cd" style={{fontSize:14,fontWeight:700,color:C.amber,minWidth:32,textAlign:"right"}}>{p.pts}</div>
-                          <div style={{fontSize:10,color:C.muted,minWidth:36,textAlign:"right"}}>£{p.price}m</div>
+                return(<div key={pos} style={{marginBottom:10}}>
+                  <div style={{fontSize:9,letterSpacing:2,color:"#6B7A99",textTransform:"uppercase",marginBottom:4}}>{pos} — {players.length}/{POS[pos].limit}</div>
+                  {players.map(p=>{
+                    const isSt=startIds.has(p.id),isCap=p.id===row.captain_id,isVice=p.id===row.vice_captain_id;
+                    return(<div key={p.id} className="sr ch" onClick={()=>setModal(p.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 8px",borderRadius:6,borderLeft:`3px solid ${isSt?POS[pos].text+"60":"transparent"}`}}>
+                      <span style={{fontSize:15}}>{p.flag}</span>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:4}}>
+                          <span style={{fontSize:12,fontWeight:600}}>{p.name}</span>
+                          {isCap&&<span style={{background:"#FF6B35",color:"#080C14",fontSize:8,fontWeight:800,padding:"0 4px",borderRadius:2}}>CAP</span>}
+                          {isVice&&<span style={{background:"#FFD166"+"40",color:"#FFD166",fontSize:8,fontWeight:800,padding:"0 4px",borderRadius:2}}>V</span>}
+                          {!isSt&&<span style={{background:"rgba(255,255,255,0.05)",color:"#6B7A99",fontSize:8,padding:"0 4px",borderRadius:2}}>BENCH</span>}
                         </div>
-                      );
-                    })}
-                  </div>
-                );
+                        <div style={{fontSize:9,color:"#6B7A99"}}>{p.club} · {p.form.toFixed(1)} form</div>
+                      </div>
+                      <div style={{display:"flex",gap:3}}>
+                        <button className="nb" onClick={e=>{e.stopPropagation();update({captain_id:p.id});}} style={{fontSize:9,color:isCap?"#FF6B35":"#6B7A99",border:`1px solid ${isCap?"#FF6B35":"#6B7A99"+"40"}`,borderRadius:3,padding:"2px 5px"}}>C</button>
+                        <button className="nb" onClick={e=>{e.stopPropagation();update({vice_captain_id:p.id});}} style={{fontSize:9,color:isVice?"#FFD166":"#6B7A99",border:`1px solid ${isVice?"#FFD166":"#6B7A99"+"40"}`,borderRadius:3,padding:"2px 5px"}}>V</button>
+                      </div>
+                      <div className="cd" style={{fontSize:14,fontWeight:700,color:"#FFD166",minWidth:32,textAlign:"right"}}>{p.pts}</div>
+                      <div style={{fontSize:10,color:"#6B7A99",minWidth:36,textAlign:"right"}}>£{p.price}m</div>
+                    </div>);
+                  })}
+                </div>);
               })}
             </div>
           </div>
         )}
 
-        {/* ══════════════════════
-            TRANSFERS
-        ══════════════════════ */}
+        {/* ══ TRANSFERS ══ */}
         {tab==="transfers"&&(
           <div>
-            {/* Header bar */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-              {[
-                {l:"Free Transfers",v:row.free_transfers,c:row.free_transfers>0?C.gold:C.muted},
-                {l:"Transfer Hits",v:row.transfer_hits,c:row.transfer_hits>0?"#E07272":C.muted},
-                {l:"Budget",v:`£${row.budget.toFixed(1)}m`,c:C.gold},
-              ].map(s=>(
-                <div key={s.l} style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:10,padding:"10px 10px",textAlign:"center"}}>
+              {[{l:"Free Transfers",v:row.free_transfers||0,c:(row.free_transfers||0)>0?"#FF6B35":"#6B7A99"},{l:"Transfer Hits",v:row.transfer_hits||0,c:(row.transfer_hits||0)>0?"#E07272":"#6B7A99"},{l:"Budget",v:`£${(row.budget||0).toFixed(1)}m`,c:"#FF6B35"}].map(s=>(
+                <div key={s.l} style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.01)",borderRadius:10,padding:"10px",textAlign:"center"}}>
                   <div className="cd" style={{fontSize:22,fontWeight:800,color:s.c}}>{s.v}</div>
-                  <div style={{fontSize:9,color:C.muted,marginTop:1}}>{s.l}</div>
+                  <div style={{fontSize:9,color:"#6B7A99",marginTop:1}}>{s.l}</div>
                 </div>
               ))}
             </div>
-
-            {/* Search + filters */}
-            <input className="inp cb" value={transferSearch} onChange={e=>setTSearch(e.target.value)} placeholder="Search player or club…" style={{marginBottom:8}}/>
+            <input className="inp cb" value={tfSearch} onChange={e=>setTfSearch(e.target.value)} placeholder="Search player or club…" style={{marginBottom:8}}/>
             <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
               {["ALL","GK","DEF","MID","FWD"].map(pos=>(
-                <button key={pos} className="nb cb" onClick={()=>setTF(pos)}
-                  style={{background:transferFilter===pos?C.gold:C.dark,color:transferFilter===pos?C.dark:C.muted,border:`1px solid ${transferFilter===pos?C.gold:C.gold+"20"}`,borderRadius:6,padding:"5px 11px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>{pos}</button>
+                <button key={pos} className="nb cb" onClick={()=>setTfFilter(pos)}
+                  style={{background:tfFilter===pos?"#FF6B35":"#0D1220",color:tfFilter===pos?"#0D1220":"#6B7A99",border:`1px solid ${tfFilter===pos?"#FF6B35":"#FF6B35"+"20"}`,borderRadius:6,padding:"5px 11px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>{pos}</button>
               ))}
               <div style={{flex:1}}/>
               {[["pts","Pts"],["price","£"],["form","Form"]].map(([k,l])=>(
-                <button key={k} className="nb cb" onClick={()=>setTS(k)}
-                  style={{background:transferSort===k?C.sage+"50":C.dark,color:transferSort===k?C.cream:C.muted,border:`1px solid ${C.gold}18`,borderRadius:6,padding:"5px 9px",fontSize:10,whiteSpace:"nowrap"}}>{l}</button>
+                <button key={k} className="nb cb" onClick={()=>setTfSort(k)}
+                  style={{background:tfSort===k?"#06D6A0"+"50":"#0D1220",color:tfSort===k?"#F0F4FF":"#6B7A99",border:"1px solid rgba(255,107,53,0.02)",borderRadius:6,padding:"5px 9px",fontSize:10,whiteSpace:"nowrap"}}>{l}</button>
               ))}
             </div>
-
-            {/* Player list */}
             {avail.map(p=>{
               const inSq=squadIds.has(p.id);
-              const ok=canAdd(p);
-              return(
-                <div key={p.id} onClick={()=>setModal(p.id)}
-                  style={{background:C.dark,border:`1px solid ${inSq?C.gold+"40":C.gold+"12"}`,borderRadius:10,padding:"9px 11px",display:"flex",alignItems:"center",gap:9,marginBottom:7,cursor:"pointer",opacity:!inSq&&!ok?0.45:1}}>
-                  <div style={{width:38,height:38,borderRadius:"50%",background:POS[p.pos].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,border:`2px solid ${POS[p.pos].text}35`,flexShrink:0}}>{p.flag}</div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:5}}>
-                      <span style={{fontSize:12,fontWeight:600}}>{p.name}</span>
-                      <span style={{background:POS[p.pos].bg,color:POS[p.pos].text,fontSize:8,fontWeight:700,padding:"1px 4px",borderRadius:2}}>{p.pos}</span>
-                      {inSq&&<span style={{background:C.gold+"25",color:C.gold,fontSize:8,fontWeight:700,padding:"1px 4px",borderRadius:2}}>IN SQUAD</span>}
-                    </div>
-                    <div style={{fontSize:9,color:C.muted}}>{p.club} · {p.sel}% sel · Form {p.form.toFixed(1)}</div>
+              const {ok}=canAddPlayer(p);
+              return(<div key={p.id} onClick={()=>setModal(p.id)}
+                style={{background:"#0D1220",border:`1px solid ${inSq?"rgba(255,107,53,0.4)":"rgba(255,255,255,0.06)"}`,borderRadius:10,padding:"9px 11px",display:"flex",alignItems:"center",gap:9,marginBottom:7,cursor:"pointer",opacity:!inSq&&!ok?0.45:1}}>
+                <div style={{width:36,height:36,borderRadius:"50%",background:POS[p.pos].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{p.flag}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}>
+                    <span style={{fontSize:12,fontWeight:600}}>{p.name}</span>
+                    <span style={{background:POS[p.pos].bg,color:POS[p.pos].text,fontSize:8,fontWeight:700,padding:"1px 4px",borderRadius:2}}>{p.pos}</span>
+                    {inSq&&<span style={{background:"#FF6B35"+"20",color:"#FF6B35",fontSize:8,fontWeight:700,padding:"1px 4px",borderRadius:2}}>IN</span>}
                   </div>
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <div style={{textAlign:"center"}}>
-                      <div className="cd" style={{fontSize:15,fontWeight:800,color:C.amber}}>{p.pts}</div>
-                      <div style={{fontSize:8,color:C.muted}}>pts</div>
-                    </div>
-                    <div style={{textAlign:"center"}}>
-                      <div className="cd" style={{fontSize:13,fontWeight:700,color:C.gold}}>£{p.price}m</div>
-                      <div style={{fontSize:8,color:C.muted}}>price</div>
-                    </div>
-                  </div>
+                  <div style={{fontSize:9,color:"#6B7A99"}}>{p.club} · {p.sel}% sel · {p.form.toFixed(1)} form</div>
                 </div>
-              );
+                <div style={{textAlign:"center"}}>
+                  <div className="cd" style={{fontSize:15,fontWeight:800,color:"#FFD166"}}>{p.pts}</div>
+                  <div className="cd" style={{fontSize:12,fontWeight:700,color:"#FF6B35"}}>£{p.price}m</div>
+                </div>
+              </div>);
             })}
           </div>
         )}
 
-        {/* ══════════════════════
-            POINTS
-        ══════════════════════ */}
+        {/* ══ POINTS ══ */}
         {tab==="points"&&(
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
               <div>
-                <div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>GW 27 POINTS</div>
-                <div style={{fontSize:10,color:C.muted}}>{row.team_name}</div>
+                <div className="cd" style={{fontSize:19,fontWeight:800,color:"#FF6B35",letterSpacing:1}}>GW 27 POINTS</div>
+                <div style={{fontSize:10,color:"#6B7A99"}}>{row.team_name}</div>
               </div>
               <div style={{textAlign:"right"}}>
-                <div className="cd" style={{fontSize:28,fontWeight:800,color:C.amber}}>{gwPts}</div>
-                <div style={{fontSize:9,color:C.muted}}>gameweek total</div>
+                <div className="cd" style={{fontSize:28,fontWeight:800,color:"#FFD166"}}>{gwPts}</div>
+                <div style={{fontSize:9,color:"#6B7A99"}}>this gameweek</div>
               </div>
             </div>
-
-            {/* Points explainer */}
-            {row.transfer_hits>0&&(
-              <div style={{background:"rgba(192,82,42,0.12)",border:"1px solid rgba(192,82,42,0.3)",borderRadius:8,padding:"8px 12px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:12,color:"#E07272"}}>Transfer penalty ({row.transfer_hits} hit{row.transfer_hits>1?"s":""})</span>
-                <span className="cd" style={{fontSize:14,fontWeight:700,color:"#E07272"}}>-{row.transfer_hits*4} pts</span>
+            {(row.transfer_hits||0)>0&&(
+              <div style={{background:"rgba(239,35,60,0.1)",border:"1px solid rgba(239,35,60,0.3)",borderRadius:8,padding:"8px 12px",marginBottom:10,display:"flex",justifyContent:"space-between"}}>
+                <span style={{fontSize:12,color:"#FF6B6B"}}>Transfer penalty ({row.transfer_hits} hit{row.transfer_hits>1?"s":""})</span>
+                <span className="cd" style={{fontSize:14,fontWeight:700,color:"#E07272"}}>-{(row.transfer_hits||0)*4}</span>
               </div>
             )}
-
-            {/* Starting XI points */}
-            <div className="cd" style={{fontSize:12,fontWeight:700,color:C.muted,letterSpacing:1,marginBottom:6,paddingLeft:8}}>STARTING XI</div>
-            {byIds(row.starting_ids).map(p=>{
+            <div className="cd" style={{fontSize:11,fontWeight:700,color:"#6B7A99",letterSpacing:1,marginBottom:6,paddingLeft:8}}>STARTING XI</div>
+            {byIds(row.starting_ids||[]).map(p=>{
+              if(!p)return null;
               const isCap=p.id===row.captain_id,isVice=p.id===row.vice_captain_id;
-              const pts=calcPoints(p,isCap,isVice,chip3x,true);
-              const base=calcPoints(p,false,false,false,true);
+              const pts=calcPts(p,isCap,isVice,chip3x,true);
+              const base=calcPts(p,false,false,false,true);
               const s=p.stats;
-              return(
-                <div key={p.id} style={{background:C.dark,border:`1px solid ${C.gold}12`,borderRadius:10,marginBottom:7,overflow:"hidden"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:9,padding:"9px 11px"}}>
-                    <div style={{fontSize:18}}>{p.flag}</div>
-                    <div style={{flex:1}}>
-                      <div style={{display:"flex",alignItems:"center",gap:5}}>
-                        <span style={{fontSize:12,fontWeight:600}}>{p.name}</span>
-                        {isCap&&<span style={{background:C.gold,color:C.dark,fontSize:8,fontWeight:800,padding:"0 4px",borderRadius:2}}>CAP{chip3x?"×3":"×2"}</span>}
-                        {isVice&&!isCap&&<span style={{background:C.amber+"30",color:C.amber,fontSize:8,fontWeight:800,padding:"0 4px",borderRadius:2}}>VICE</span>}
-                      </div>
-                      <div style={{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}}>
-                        {s.goals>0&&<span style={{fontSize:9,color:"#72E0A0"}}>⚽ ×{s.goals}</span>}
-                        {s.assists>0&&<span style={{fontSize:9,color:C.amber}}>🅰️ ×{s.assists}</span>}
-                        {s.cs>0&&(p.pos==="GK"||p.pos==="DEF")&&<span style={{fontSize:9,color:"#72C4E0"}}>🛡️ CS</span>}
-                        {s.saves>0&&p.pos==="GK"&&<span style={{fontSize:9,color:"#72C4E0"}}>🧤 {s.saves}</span>}
-                        {s.yc>0&&<span style={{fontSize:9,color:"#FFA726"}}>🟨 ×{s.yc}</span>}
-                        {s.rc>0&&<span style={{fontSize:9,color:"#E07272"}}>🟥</span>}
-                        {s.bonus>0&&<span style={{fontSize:9,color:C.gold}}>★ {s.bonus}</span>}
-                      </div>
+              return(<div key={p.id} style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.01)",borderRadius:10,marginBottom:7}}>
+                <div style={{display:"flex",alignItems:"center",gap:9,padding:"9px 11px"}}>
+                  <div style={{fontSize:17}}>{p.flag}</div>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{fontSize:12,fontWeight:600}}>{p.name}</span>
+                      {isCap&&<span style={{background:"#FF6B35",color:"#080C14",fontSize:8,fontWeight:800,padding:"0 4px",borderRadius:2}}>CAP{chip3x?"×3":"×2"}</span>}
+                      {isVice&&!isCap&&<span style={{background:"#FFD166"+"30",color:"#FFD166",fontSize:8,fontWeight:800,padding:"0 4px",borderRadius:2}}>VICE×2</span>}
                     </div>
-                    <div style={{textAlign:"right"}}>
-                      <div className="cd" style={{fontSize:22,fontWeight:800,color:C.amber}}>{pts}</div>
-                      {(isCap||isVice)&&<div style={{fontSize:9,color:C.muted}}>base {base}</div>}
+                    <div style={{display:"flex",gap:7,marginTop:3,flexWrap:"wrap"}}>
+                      {s.goals>0&&<span style={{fontSize:9,color:"#72E0A0"}}>⚽×{s.goals}</span>}
+                      {s.assists>0&&<span style={{fontSize:9,color:"#FFD166"}}>🅰️×{s.assists}</span>}
+                      {s.cs>0&&(p.pos==="GK"||p.pos==="DEF")&&<span style={{fontSize:9,color:"#72C4E0"}}>🛡️CS</span>}
+                      {s.saves>0&&p.pos==="GK"&&<span style={{fontSize:9,color:"#72C4E0"}}>🧤{s.saves}</span>}
+                      {s.yc>0&&<span style={{fontSize:9,color:"#FFA726"}}>🟨×{s.yc}</span>}
+                      {s.rc>0&&<span style={{fontSize:9,color:"#E07272"}}>🟥</span>}
+                      {s.bonus>0&&<span style={{fontSize:9,color:"#FF6B35"}}>★{s.bonus}</span>}
                     </div>
                   </div>
+                  <div style={{textAlign:"right"}}>
+                    <div className="cd" style={{fontSize:22,fontWeight:800,color:"#FFD166"}}>{pts}</div>
+                    {(isCap||isVice)&&<div style={{fontSize:9,color:"#6B7A99"}}>base {base}</div>}
+                  </div>
                 </div>
-              );
+              </div>);
             })}
-
-            {/* Bench */}
-            <div className="cd" style={{fontSize:12,fontWeight:700,color:C.muted,letterSpacing:1,marginBottom:6,paddingLeft:8,marginTop:8}}>BENCH</div>
+            <div className="cd" style={{fontSize:11,fontWeight:700,color:"#6B7A99",letterSpacing:1,marginBottom:6,paddingLeft:8,marginTop:8}}>BENCH</div>
             {bench.map(p=>{
-              const pts=row.active_chip==="bench_boost"?calcPoints(p,false,false,false,true):0;
-              return(
-                <div key={p.id} style={{background:C.dark,border:`1px solid ${C.gold}08`,borderRadius:10,marginBottom:6,padding:"8px 11px",display:"flex",alignItems:"center",gap:9,opacity:0.65}}>
-                  <div style={{fontSize:16}}>{p.flag}</div>
-                  <div style={{flex:1}}><span style={{fontSize:12,fontWeight:600}}>{p.name}</span><div style={{fontSize:9,color:C.muted}}>{p.club}</div></div>
-                  <div className="cd" style={{fontSize:18,fontWeight:700,color:pts>0?C.amber:C.muted}}>{pts>0?pts:"—"}</div>
-                </div>
-              );
+              if(!p)return null;
+              const pts=row.active_chip==="bench_boost"?calcPts(p,false,false,false,true):0;
+              return(<div key={p.id} style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.01)",borderRadius:10,marginBottom:6,padding:"8px 11px",display:"flex",alignItems:"center",gap:9,opacity:0.6}}>
+                <div style={{fontSize:15}}>{p.flag}</div>
+                <div style={{flex:1}}><span style={{fontSize:12,fontWeight:600}}>{p.name}</span><div style={{fontSize:9,color:"#6B7A99"}}>{p.club}</div></div>
+                <div className="cd" style={{fontSize:17,fontWeight:700,color:pts>0?"#FFD166":"#6B7A99"}}>{pts>0?pts:"—"}</div>
+              </div>);
             })}
           </div>
         )}
 
-        {/* ══════════════════════
-            LEAGUES
-        ══════════════════════ */}
+        {/* ══ LEAGUES ══ */}
         {tab==="leagues"&&(
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div>
-                <div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>MINI-LEAGUE</div>
-                <div style={{fontSize:10,color:C.muted}}>Live standings · all managers</div>
+                <div className="cd" style={{fontSize:19,fontWeight:800,color:"#FF6B35",letterSpacing:1}}>MINI-LEAGUE</div>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginTop:2}}>
+                  <div style={{fontSize:10,color:"#6B7A99"}}>Live standings</div>
+                  {liveCount>0&&<span className="live-badge"><span className="pulse-dot"/>{liveCount} online now</span>}
+                </div>
               </div>
-              <button className="nb cb" onClick={fetchLeague} style={{fontSize:11,color:C.muted,border:`1px solid ${C.gold}20`,borderRadius:6,padding:"5px 10px"}}>{leagueLoading?"…":"↻ Refresh"}</button>
+              <button className="nb cb" onClick={fetchLeague} style={{fontSize:11,color:"#6B7A99",border:"1px solid rgba(255,107,53,0.02)",borderRadius:6,padding:"5px 10px"}}>{leagueLoading?"…":"↻"}</button>
             </div>
-
-            {/* Podium */}
             {leagueData.length>=3&&(
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14,alignItems:"end"}}>
-                {[leagueData[1],leagueData[0],leagueData[2]].map((m,i)=>{
+                {[leagueData[1],leagueData[0],leagueData[2]].filter(Boolean).map((m,i)=>{
                   const h=[108,128,92][i],r=i===0?2:i===1?1:3;
-                  const rc=r===1?C.gold:r===2?"#C0C0C0":"#CD7F32";
-                  return(
-                    <div key={m.username} style={{textAlign:"center"}}>
-                      <div style={{fontSize:20,marginBottom:2}}>{m.badge}</div>
-                      <div style={{fontSize:10,fontWeight:600,marginBottom:2,color:m.username===row.username?C.gold:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.team_name}</div>
-                      <div style={{background:rc+"20",border:`1px solid ${rc}40`,borderRadius:"8px 8px 0 0",height:h,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",padding:7}}>
-                        <div className="cd" style={{fontSize:22,fontWeight:800,color:rc}}>{r}</div>
-                        <div className="cd" style={{fontSize:14,fontWeight:700,color:C.amber}}>{(m.total_pts||0).toLocaleString()}</div>
-                        <div style={{fontSize:9,color:C.muted}}>pts</div>
-                      </div>
+                  const rc=r===1?"#FF6B35":r===2?"#C0C0C0":"#CD7F32";
+                  return(<div key={m.user_id||m.username} style={{textAlign:"center"}}>
+                    <div style={{fontSize:18,marginBottom:2}}>{m.badge}</div>
+                    <div style={{fontSize:10,fontWeight:600,marginBottom:2,color:m.user_id===user.id?"#FF6B35":"#F0F4FF",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.team_name}</div>
+                    <div style={{background:rc+"20",border:`1px solid ${rc}40`,borderRadius:"8px 8px 0 0",height:h,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",padding:7}}>
+                      <div className="cd" style={{fontSize:22,fontWeight:800,color:rc}}>{r}</div>
+                      <div className="cd" style={{fontSize:14,fontWeight:700,color:"#FFD166"}}>{(m.total_pts||0).toLocaleString()}</div>
+                      <div style={{fontSize:9,color:"#6B7A99"}}>pts</div>
                     </div>
-                  );
+                  </div>);
                 })}
               </div>
             )}
-
-            {/* Full table */}
-            <div style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:12,overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"26px 1fr 52px 40px",padding:"6px 11px",borderBottom:`1px solid ${C.gold}20`}}>
-                {["#","Team","Total","GW"].map(h=>(<div key={h} style={{fontSize:8,color:C.muted,fontWeight:700,letterSpacing:1,textTransform:"uppercase",textAlign:h!=="Team"?"center":"left"}}>{h}</div>))}
+            <div style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.01)",borderRadius:12,overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"26px 1fr 52px 40px",padding:"6px 11px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+                {["#","Team","Total","GW"].map(h=>(<div key={h} style={{fontSize:8,color:"#6B7A99",fontWeight:700,letterSpacing:1,textTransform:"uppercase",textAlign:h!=="Team"?"center":"left"}}>{h}</div>))}
               </div>
-              {leagueLoading&&<div style={{padding:18,textAlign:"center",color:C.muted,fontSize:13}}>Loading…</div>}
-              {!leagueLoading&&leagueData.length===0&&<div style={{padding:18,textAlign:"center",color:C.muted,fontSize:13}}>No managers yet — share the link!</div>}
+              {leagueLoading&&<div style={{padding:18,textAlign:"center",color:"#6B7A99",fontSize:13}}>Loading…</div>}
+              {!leagueLoading&&leagueData.length===0&&<div style={{padding:18,textAlign:"center",color:"#6B7A99",fontSize:13}}>No managers yet — share the link!</div>}
               {leagueData.map((m,i)=>(
-                <div key={m.username} className="sr" style={{display:"grid",gridTemplateColumns:"26px 1fr 52px 40px",padding:"8px 11px",alignItems:"center",borderLeft:m.username===row.username?`3px solid ${C.gold}`:"3px solid transparent"}}>
-                  <div className="cd" style={{fontSize:13,fontWeight:800,color:i<3?C.gold:C.muted,textAlign:"center"}}>{i+1}</div>
+                <div key={m.user_id||m.username} className="sr" style={{display:"grid",gridTemplateColumns:"26px 1fr 52px 40px",padding:"8px 11px",alignItems:"center",borderLeft:m.user_id===user.id?`3px solid ${"#FF6B35"}`:"3px solid transparent"}}>
+                  <div className="cd" style={{fontSize:13,fontWeight:800,color:i<3?"#FF6B35":"#6B7A99",textAlign:"center"}}>{i+1}</div>
                   <div>
-                    <div style={{fontSize:11,fontWeight:m.username===row.username?700:500,color:m.username===row.username?C.gold:C.cream}}>{m.badge} {m.team_name}</div>
-                    <div style={{fontSize:8,color:C.muted}}>{m.username}</div>
+                    <div style={{fontSize:11,fontWeight:m.user_id===user.id?700:500,color:m.user_id===user.id?"#FF6B35":"#F0F4FF"}}>{m.badge} {m.team_name}</div>
+                    <div style={{fontSize:8,color:"#6B7A99"}}>{m.username}</div>
                   </div>
-                  <div className="cd" style={{fontSize:13,fontWeight:700,color:C.amber,textAlign:"center"}}>{(m.total_pts||0).toLocaleString()}</div>
-                  <div style={{fontSize:10,color:C.muted,textAlign:"center"}}>{m.gw_pts||0}</div>
+                  <div className="cd" style={{fontSize:13,fontWeight:700,color:"#FFD166",textAlign:"center"}}>{(m.total_pts||0).toLocaleString()}</div>
+                  <div style={{fontSize:10,color:"#6B7A99",textAlign:"center"}}>{m.gw_pts||0}</div>
                 </div>
               ))}
             </div>
-
-            <div style={{marginTop:10,background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:10,padding:"11px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{fontSize:11,color:C.muted}}>League Code</div>
-              <div className="cd" style={{fontSize:18,fontWeight:800,color:C.gold,letterSpacing:4}}>CAF-7291</div>
-              <button className="nb cb" onClick={()=>navigator.clipboard?.writeText("CAF-7291")} style={{background:C.sage+"30",border:`1px solid ${C.sage}`,borderRadius:6,padding:"4px 10px",fontSize:10,color:C.cream}}>📋 Copy</button>
+            <div style={{marginTop:10,background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.01)",borderRadius:10,padding:"11px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontSize:11,color:"#6B7A99"}}>League Code</div>
+              <div className="cd" style={{fontSize:18,fontWeight:800,color:"#FF6B35",letterSpacing:4}}>CAF-2526</div>
+              <button className="nb cb" onClick={()=>navigator.clipboard?.writeText("caf-fantasy.netlify.app")} style={{background:"rgba(6,214,160,0.1)",border:"1px solid rgba(6,214,160,0.3)",borderRadius:6,padding:"4px 10px",fontSize:10,color:"#F0F4FF"}}>📋 Copy link</button>
             </div>
           </div>
         )}
 
-        {/* ══════════════════════
-            FIXTURES
-        ══════════════════════ */}
+        {/* ══ FIXTURES ══ */}
         {tab==="fixtures"&&(
           <div>
             <div style={{marginBottom:12}}>
-              <div className="cd" style={{fontSize:19,fontWeight:800,color:C.gold,letterSpacing:1}}>GW28 FIXTURES</div>
-              <div style={{fontSize:10,color:C.muted}}>Apr 12–14, 2026 · Difficulty rating shown</div>
+              <div className="cd" style={{fontSize:19,fontWeight:800,color:"#FF6B35",letterSpacing:1}}>GW28 FIXTURES</div>
+              <div style={{fontSize:10,color:"#6B7A99"}}>Apr 12–14, 2026 · Difficulty 1(easy)→5(hard)</div>
             </div>
-
-            {/* Difficulty key */}
-            <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
-              <div style={{fontSize:9,color:C.muted,marginRight:2}}>Difficulty:</div>
-              {[[1,"Very Easy"],[2,"Easy"],[3,"Medium"],[4,"Hard"],[5,"Very Hard"]].map(([d,l])=>(
-                <div key={d} style={{display:"flex",alignItems:"center",gap:3}}>
-                  <DiffBadge d={d}/><span style={{fontSize:9,color:C.muted}}>{l}</span>
-                </div>
-              ))}
-            </div>
-
             {FIXTURES.map((f,i)=>{
               const myPl=squadAll.filter(p=>p.nation===f.hc||p.nation===f.ac);
-              return(
-                <div key={i} style={{background:C.dark,border:`1px solid ${C.gold}15`,borderRadius:12,padding:"11px 13px",marginBottom:9}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                    <div style={{fontSize:8,color:C.muted,letterSpacing:1}}>GW28 · {f.date}</div>
-                    <div style={{fontSize:10,color:C.amber,fontWeight:600}}>{f.time} CAT</div>
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{flex:1,textAlign:"center"}}>
-                      <div style={{fontSize:26}}>{f.hf}</div>
-                      <div className="cd" style={{fontSize:11,fontWeight:700,marginTop:2}}>{f.home.toUpperCase()}</div>
-                      <div style={{marginTop:3}}><DiffBadge d={f.hd}/></div>
-                    </div>
-                    <div style={{textAlign:"center",padding:"4px 10px",background:C.sage+"25",borderRadius:8}}>
-                      <div className="cd" style={{fontSize:15,fontWeight:800,color:C.gold}}>VS</div>
-                    </div>
-                    <div style={{flex:1,textAlign:"center"}}>
-                      <div style={{fontSize:26}}>{f.af}</div>
-                      <div className="cd" style={{fontSize:11,fontWeight:700,marginTop:2}}>{f.away.toUpperCase()}</div>
-                      <div style={{marginTop:3}}><DiffBadge d={f.ad}/></div>
-                    </div>
-                  </div>
-                  {myPl.length>0&&(
-                    <div style={{marginTop:9,paddingTop:9,borderTop:`1px solid ${C.gold}12`}}>
-                      <div style={{fontSize:8,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:5}}>Your players</div>
-                      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                        {myPl.map(p=>(
-                          <div key={p.id} style={{display:"flex",alignItems:"center",gap:3,background:POS[p.pos].bg+"45",borderRadius:5,padding:"2px 7px"}}>
-                            <span style={{fontSize:11}}>{p.flag}</span>
-                            <span style={{fontSize:10,color:POS[p.pos].text,fontWeight:600}}>{p.name.split(" ").pop()}</span>
-                            {p.id===row.captain_id&&<span style={{fontSize:8,color:C.gold,fontWeight:800}}>C</span>}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              const dColors=["","#2E7D32","#66BB6A","#FFA726","#EF5350","#B71C1C"];
+              return(<div key={i} className="ch" style={{background:"#0D1220",border:`1px solid rgba(255,107,53,0.2)`||"1px solid rgba(255,107,53,0.01)",borderRadius:12,padding:"12px 13px",marginBottom:9}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                  <div style={{fontSize:8,color:"#6B7A99",letterSpacing:1}}>GW28 · {f.date}</div>
+                  <div style={{fontSize:10,color:"#FFD166",fontWeight:600}}>{f.time} CAT</div>
                 </div>
-              );
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{flex:1,textAlign:"center"}}>
+                    <div style={{fontSize:26}}>{f.hf}</div>
+                    <div className="cd" style={{fontSize:11,fontWeight:700,marginTop:2}}>{f.home.toUpperCase()}</div>
+                    <div style={{marginTop:3}}><span style={{background:dColors[f.hd],color:"white",fontSize:9,fontWeight:800,padding:"1px 5px",borderRadius:3}}>{f.hd}</span></div>
+                  </div>
+                  <div style={{textAlign:"center",padding:"4px 10px",background:"rgba(6,214,160,0.08)",borderRadius:8,border:"1px solid rgba(6,214,160,0.2)"}}>
+                    <div className="cd" style={{fontSize:15,fontWeight:800,color:"#FF6B35"}}>VS</div>
+                  </div>
+                  <div style={{flex:1,textAlign:"center"}}>
+                    <div style={{fontSize:26}}>{f.af}</div>
+                    <div className="cd" style={{fontSize:11,fontWeight:700,marginTop:2}}>{f.away.toUpperCase()}</div>
+                    <div style={{marginTop:3}}><span style={{background:dColors[f.ad],color:"white",fontSize:9,fontWeight:800,padding:"1px 5px",borderRadius:3}}>{f.ad}</span></div>
+                  </div>
+                </div>
+                {myPl.length>0&&(
+                  <div style={{marginTop:9,paddingTop:9,borderTop:"1px solid rgba(255,107,53,0.01)"}}>
+                    <div style={{fontSize:8,color:"#6B7A99",letterSpacing:1,textTransform:"uppercase",marginBottom:5}}>Your players</div>
+                    <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                      {myPl.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:3,background:POS[p.pos].bg+"45",borderRadius:5,padding:"2px 7px"}}>
+                        <span style={{fontSize:11}}>{p.flag}</span>
+                        <span style={{fontSize:10,color:POS[p.pos].text,fontWeight:600}}>{p.name.split(" ").pop()}</span>
+                        {p.id===row.captain_id&&<span style={{fontSize:8,color:"#FF6B35",fontWeight:800}}>C</span>}
+                      </div>))}
+                    </div>
+                  </div>
+                )}
+              </div>);
             })}
           </div>
         )}
-
       </div>
 
-      {/* ── PLAYER MODAL ── */}
+      {/* Player modal */}
       {modalPlayer&&(
-        <PlayerModal
-          player={modalPlayer}
-          inSquad={squadIds.has(modalPlayer.id)}
-          canAdd={canAdd(modalPlayer)}
-          onAdd={()=>addPlayer(modalPlayer)}
-          onRemove={()=>removePlayer(modalPlayer)}
-          onClose={()=>setModal(null)}
-        />
+        <PlayerModal player={modalPlayer} inSquad={squadIds.has(modalPlayer.id)} canAdd={mOk} reason={mReason}
+          onAdd={()=>addPlayer(modalPlayer)} onRemove={()=>removePlayer(modalPlayer)} onClose={()=>setModal(null)}/>
       )}
     </div>
   );
 }
 
-/* ── ROOT ── */
+/* ════════════════════════════════════
+   ROOT — session management
+════════════════════════════════════ */
 function Root(){
-  const [teamRow,setTeamRow]=useState(null);
-  const [booting,setBooting]=useState(true);
+  const [authState,setAuthState]=useState(null); // null=loading, false=logged-out, {user,team}=logged-in
 
   useEffect(()=>{
-    const saved=localStorage.getItem("caf_u");
-    if(saved){
-      sb.from("teams").select("*").eq("username",saved).maybeSingle()
-        .then(({data})=>{if(data)setTeamRow(data);setBooting(false);});
-    }else{setBooting(false);}
+    // Check existing session
+    sb.auth.getSession().then(async({data:{session}})=>{
+      if(!session){setAuthState(false);return;}
+      const {data:team}=await sb.from("teams").select("*").eq("user_id",session.user.id).maybeSingle();
+      setAuthState(team?{user:session.user,team}:false);
+    });
+    // Listen for auth changes
+    const {data:{subscription}}=sb.auth.onAuthStateChange(async(event,session)=>{
+      if(!session){setAuthState(false);return;}
+      if(event==="SIGNED_IN"||event==="TOKEN_REFRESHED"){
+        const {data:team}=await sb.from("teams").select("*").eq("user_id",session.user.id).maybeSingle();
+        if(team)setAuthState({user:session.user,team});
+      }
+    });
+    return()=>subscription.unsubscribe();
   },[]);
 
-  if(booting)return(
-    <div style={{minHeight:"100vh",background:"#0B2A1A",display:"flex",alignItems:"center",justifyContent:"center"}}>
+  if(authState===null)return(
+    <div style={{minHeight:"100vh",background:"#080C14",display:"flex",alignItems:"center",justifyContent:"center"}}>
       <style>{css}</style>
-      <div className="cd" style={{fontSize:22,fontWeight:800,color:"#D4A017",letterSpacing:2}}>CAF FANTASY</div>
+      <div className="cd" style={{fontSize:22,fontWeight:800,color:"#FF6B35",letterSpacing:2}}>CAF FANTASY</div>
     </div>
   );
-  if(!teamRow)return <LoginScreen onLogin={setTeamRow}/>;
-  return <App key={teamRow.id} initialTeam={teamRow}/>;
+
+  if(!authState)return <AuthScreen onAuth={(user,team)=>setAuthState({user,team})}/>;
+  return <App key={authState.user.id} user={authState.user} initialTeam={authState.team}/>;
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);
